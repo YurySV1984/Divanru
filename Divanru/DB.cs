@@ -11,6 +11,9 @@ namespace Divanru
     class DB
     {
         MySqlConnection connection = new MySqlConnection("server=localhost;port=3307;username=root;password=root;database=divanparser");
+        public event EventHandler<ErrEventArgs> OnError;
+
+
         public void OpenConnecton()
         {
             if (connection.State == System.Data.ConnectionState.Closed)
@@ -21,7 +24,7 @@ namespace Divanru
                 }
                 catch (Exception ee)
                 {
-                    Log.WriteLog(ee.Message);
+                    OnError?.Invoke(this, new ErrEventArgs(ee.Message));
                 }
             }
         }
@@ -42,9 +45,10 @@ namespace Divanru
         /// <summary>
         /// копирует продует в БД
         /// </summary>, проверяя перед этим его наличие там
-        public static void CopyProductToDB()
+        public void CopyProductToDB()
         {
             if (Furniture.Model == null) return;
+
             var db = new DB();
             var table = new DataTable();
             var adapter = new MySqlDataAdapter();
@@ -58,14 +62,12 @@ namespace Divanru
             }
             catch (Exception ee)
             {
-                //Logs.Items.Add(ee.Message);
-                Log.WriteLog(ee.Message);
+                OnError?.Invoke(this, new ErrEventArgs(ee.Message));
             }
 
             if (table.Rows.Count > 0)
-            {
-                //Logs.Items.Add($"{Furniture.Model} is aleady in the Database");
-                Log.WriteLog($"{Furniture.Model} is aleady in the Database");
+            {        
+                OnError?.Invoke(this, new ErrEventArgs($"{Furniture.Model} is aleady in the Database"));
                 return;
             }
 
@@ -105,20 +107,18 @@ namespace Divanru
             {
                 if (command.ExecuteNonQuery() == 1)
                 {
-                    //Logs.Items.Add($"{Furniture.Model} added to the Database");
-                    Log.WriteLog($"{Furniture.Model} added to the Database");
+                    OnError?.Invoke(this, new ErrEventArgs($"{Furniture.Model} added to the Database"));
                 }
             }
             catch (Exception e)
             {
-                //Logs.Items.Add($"Error adding {Furniture.Model}, {e.Message}");
-                Log.WriteLog($"Error adding {Furniture.Model}, {e.Message}");
+                OnError?.Invoke(this, new ErrEventArgs($"Error adding {Furniture.Model}, {e.Message}"));
             }
 
             db.CloseConnecton();
         }
 
-        public static SFurniture[] SearchInDb(string key)
+        public SFurniture[] SearchInDb(string key)
         {
             var db = new DB();
             var table = new DataTable();
@@ -140,14 +140,12 @@ namespace Divanru
             }
             catch (Exception ee)
             {
-                //Logs.Items.Add(ee.Message);
-                Log.WriteLog(ee.Message);
+                OnError?.Invoke(this, new ErrEventArgs(ee.Message));
             }
 
             if (table.Rows.Count == 0)
             {
-                //Logs.Items.Add($"{tbKeyword.Text} not found");
-                Log.WriteLog($"{key} not found");
+                OnError?.Invoke(this, new ErrEventArgs($"{key} not found"));
                 return null;
             }
 
@@ -158,12 +156,11 @@ namespace Divanru
                 sfurTable[i] = new SFurniture();
                 sfurTable[i].id = (uint)table.Rows[i].ItemArray[0];
                 sfurTable[i].model = (string)table.Rows[i].ItemArray[1];
-                //listBox3.Items.Add(sfurTable[i].model);
             }
             return sfurTable;
         }
 
-        public static void OpenProductFromDB(uint id)
+        public void OpenProductFromDB(uint id)
         {
             var db = new DB();
             var table = new DataTable();
@@ -178,25 +175,9 @@ namespace Divanru
             }
             catch (Exception ee)
             {
-                //Logs.Items.Add(ee.Message);
-                Log.WriteLog(ee.Message);
+                OnError?.Invoke(this, new ErrEventArgs(ee.Message));
             }
 
-            //Furniture[] furTable = new Furniture[table.Rows.Count];
-            //for (int i = 0; i < table.Rows.Count; i++)
-            //{
-            //    furTable[i] = new Furniture();
-            //    furTable[i].categories = new string[3] { (string)table.Rows[i].ItemArray[0], (string)table.Rows[i].ItemArray[1], (string)table.Rows[i].ItemArray[2] };
-            //    furTable[i].model = (string)table.Rows[i].ItemArray[3];
-            //    furTable[i].description = (string)table.Rows[i].ItemArray[4];
-            //    furTable[i].price = (string)table.Rows[i].ItemArray[5];
-            //    furTable[i].oldPrice = (string)table.Rows[i].ItemArray[6];
-            //    furTable[i].link = (string)table.Rows[i].ItemArray[7];
-            //    furTable[i].size = new string[3] { (string)table.Rows[i].ItemArray[8], (string)table.Rows[i].ItemArray[9], (string)table.Rows[i].ItemArray[10] };
-            //    furTable[i].characteristics = new string[14] { (string)table.Rows[i].ItemArray[11], (string)table.Rows[i].ItemArray[12], (string)table.Rows[i].ItemArray[13], (string)table.Rows[i].ItemArray[14], (string)table.Rows[i].ItemArray[15], (string)table.Rows[i].ItemArray[16], (string)table.Rows[i].ItemArray[17], (string)table.Rows[i].ItemArray[18], (string)table.Rows[i].ItemArray[19], (string)table.Rows[i].ItemArray[20], (string)table.Rows[i].ItemArray[21], (string)table.Rows[i].ItemArray[22], (string)table.Rows[i].ItemArray[23], (string)table.Rows[i].ItemArray[24] };
-            //    furTable[i].imageUrl = (string)table.Rows[i].ItemArray[25];
-            //    furTable[i].image = (byte[])table.Rows[i].ItemArray[26];
-            //}
             Furniture.Categories = new string[3] { (string)table.Rows[0].ItemArray[0], (string)table.Rows[0].ItemArray[1], (string)table.Rows[0].ItemArray[2] };
             Furniture.Model = (string)table.Rows[0].ItemArray[3];
             Furniture.Description = (string)table.Rows[0].ItemArray[4];
@@ -207,22 +188,9 @@ namespace Divanru
             Furniture.Characteristics = new string[14] { (string)table.Rows[0].ItemArray[11], (string)table.Rows[0].ItemArray[12], (string)table.Rows[0].ItemArray[13], (string)table.Rows[0].ItemArray[14], (string)table.Rows[0].ItemArray[15], (string)table.Rows[0].ItemArray[16], (string)table.Rows[0].ItemArray[17], (string)table.Rows[0].ItemArray[18], (string)table.Rows[0].ItemArray[19], (string)table.Rows[0].ItemArray[20], (string)table.Rows[0].ItemArray[21], (string)table.Rows[0].ItemArray[22], (string)table.Rows[0].ItemArray[23], (string)table.Rows[0].ItemArray[24] };
             Furniture.ImageUrl = (string)table.Rows[0].ItemArray[25];
             Furniture.Image = (byte[])table.Rows[0].ItemArray[26];
-
-            //Furniture.Categories = furTable[0].categories;
-            //Furniture.Model = furTable[0].model;
-            //Furniture.Description = furTable[0].description;
-            //Furniture.Price = furTable[0].price;
-            //Furniture.OldPrice = furTable[0].oldPrice;
-            //Furniture.Link = furTable[0].link;
-            //Furniture.Size = furTable[0].size;
-            //Furniture.Characteristics = furTable[0].characteristics;
-            //Furniture.ImageUrl = furTable[0].imageUrl;
-            //Furniture.Image = furTable[0].image;
-
-            //return furTable;
         }
 
-        public static void DeleteProductFromDB(uint id, string model)
+        public void DeleteProductFromDB(uint id, string model)
         {
             var db = new DB();
             var command = new MySqlCommand($"DELETE FROM `furniture` WHERE `furniture`.`id` = @id", db.getConnection());
@@ -233,16 +201,19 @@ namespace Divanru
             {
                 if (command.ExecuteNonQuery() == 1)
                 {
-                    //Logs.Items.Add($"{model} deleted from the Database");
-                    Log.WriteLog($"{model} deleted from the Database");
+                    OnError?.Invoke(this, new ErrEventArgs($"{model} deleted from the Database"));
                 }
-                else Log.WriteLog($"Error deleting {model}");
+                //else Log.WriteLog($"Error deleting {model}");
             }
             catch (Exception ee)
             {
-                Log.WriteLog(ee.Message);
+                OnError?.Invoke(this, new ErrEventArgs(ee.Message));
             }
             db.CloseConnecton();
         }
+
+        
     }
+
+    
 }

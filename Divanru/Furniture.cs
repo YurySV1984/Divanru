@@ -10,6 +10,14 @@ namespace Divanru
     {
         public string model { get; set; }
         public uint id { get; set; }
+
+        public static List<string> GetModels(SFurniture[] sFurTable)
+        {
+            List<string> res = new List<string>(sFurTable.Length);
+            for (int i = 0; i < sFurTable.Length; i++)
+                res.Add(sFurTable[i].model);
+            return res;
+        }
     }
     
     

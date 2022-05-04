@@ -13,7 +13,9 @@ namespace Divanru
         const string siteurl = "https://www.divan.ru/ekaterinburg/";
         const string regexstring = @"""name"":""[^{]*""url"":""\\u002Fekaterinburg\\u002Fcategory\\u002F[\w-]*";
         const string catstring = "ekaterinburg\\u002Fcategory\\";
-        
+
+        public event EventHandler<ErrEventArgs> OnError;
+
         private static List<ListElement> _cats = new List<ListElement>();      //лист с категориями
 
         public ListElement this [int index]
@@ -27,9 +29,7 @@ namespace Divanru
             List<string> list = new List<string>(_cats.Count);
             //foreach (var item in _cats)
             for (int i = 0; i < _cats.Count; i++)
-            {
                 list.Add(_cats[i].title);
-            }
                 
             return list;
         }
@@ -41,7 +41,7 @@ namespace Divanru
         /// </summary>
         /// <param name="url"></param>
         /// <returns></returns>
-        public static async Task ParseCats(string url = siteurl)
+        public async Task ParseCats(string url = siteurl)
         {
             _cats.Clear();
             var httpclient = new HttpClient();
@@ -79,8 +79,7 @@ namespace Divanru
             }
             catch (Exception e)
             {
-                Log.WriteLog(e.Message);
-                //WriteLog(e.Message);
+                OnError?.Invoke(this, new ErrEventArgs(e.Message));
             }
         }
 
@@ -91,7 +90,7 @@ namespace Divanru
         /// </summary>
         /// <param name="url"></param>
         /// <returns></returns> 
-        public static async Task ParseProductsOneCat(string url)
+        public async Task ParseProductsOneCat(string url)
         {
             try
             {
@@ -126,8 +125,7 @@ namespace Divanru
             }
             catch (Exception e)
             {
-                //WriteLog(e.Message);
-                Log.WriteLog(e.Message);
+                OnError?.Invoke(this, new ErrEventArgs(e.Message));
             }
 
         }

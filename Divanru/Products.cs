@@ -13,6 +13,7 @@ namespace Divanru
     {
         private static List<ListElement> _products = new List<ListElement>();
         const string iFile = "image.jpg";
+        public event EventHandler<ErrEventArgs> OnError;
         public ListElement this[int index]
         {
             get { return _products[index]; }
@@ -30,14 +31,27 @@ namespace Divanru
             _products.AddRange(productsint);
         }
 
-        internal static object OrderBy()
+        //internal static List<ListElement> OrderBy()
+        //{
+        //    return (List<ListElement>)_products.OrderBy(p => p.title);
+        //}
+
+        internal static void OrderBy()
         {
-            return _products.OrderBy(p => p.title);
+            //return (List<ListElement>)_products.OrderBy(p => p.title);
+            _products = _products.OrderBy(p => p.title).ToList();
         }
 
         internal static void RemoveAt(int v)
         {
             _products.RemoveAt(v);
+        }
+        public List<string> GetList()
+        {
+            List<string> list = new List<string>(_products.Count);
+            foreach (var item in _products)
+                list.Add(item.title);
+            return list;
         }
 
         /// <summary>
@@ -45,7 +59,7 @@ namespace Divanru
         /// </summary>
         /// <param name="url"></param>
         /// <returns></returns>
-        public static async Task GetOneProduct(string url)
+        public async Task GetOneProduct(string url)
         {
             try
             {
@@ -116,8 +130,7 @@ namespace Divanru
             }
             catch (Exception e)
             {
-                //WriteLog(e.Message);
-                Log.WriteLog(e.Message);
+                OnError?.Invoke(this, new ErrEventArgs(e.Message));
             }
 
         }
