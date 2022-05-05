@@ -12,7 +12,7 @@ namespace Divanru
 {
     internal class Products
     {
-        private static ObservableCollection<ListElement> _products = new ObservableCollection<ListElement>();
+        private ObservableCollection<ListElement> _products = new ObservableCollection<ListElement>();
         const string iFile = "image.jpg";
         public event EventHandler<ErrEventArgs> OnError;
         public ListElement this[int index]
@@ -27,7 +27,7 @@ namespace Divanru
             _products.Clear();
         }
 
-        internal static void AddRange(List<ListElement> productsint)
+        internal void AddRange(List<ListElement> productsint)
         {
             _products.AddRange(productsint);
         }
@@ -51,7 +51,7 @@ namespace Divanru
         {
             ObservableCollection<string> list = new ObservableCollection<string>();
             foreach (var item in _products)
-                list.Add(item.title);
+                list.Add(item.title);            
             return list;
         }
 
@@ -65,7 +65,7 @@ namespace Divanru
             try
             {
                 var httpclient = new HttpClient();
-                var html = await httpclient.GetStringAsync("https://www.divan.ru" + url);
+                var html = await httpclient.GetStringAsync(url);
                 var htmlDocument = new HtmlAgilityPack.HtmlDocument();
                 htmlDocument.LoadHtml(html);
 
@@ -85,8 +85,8 @@ namespace Divanru
                 Furniture.OldPrice = null;
                 Furniture.OldPrice = htmlDocument.DocumentNode.DescendantsAndSelf("span")
                     .Where(node => node.GetAttributeValue("class", "").Contains("Zq2dF h1mna F9ye5 wfxlK")).FirstOrDefault()?.InnerText;
-                Furniture.Link = null;
-                Furniture.Link = "https://www.divan.ru" + url;
+                //Furniture.Link = null;
+                Furniture.Link = url;
                 Furniture.Size = null;
                 var size = htmlDocument.DocumentNode.Descendants("div")
                     .Where(node => node.GetAttributeValue("class", "").Equals("Pl7um")).FirstOrDefault()?.Descendants("div")
@@ -122,19 +122,8 @@ namespace Divanru
                 httpclient = new HttpClient();
                 HttpResponseMessage response = await httpclient.GetAsync(Furniture.ImageUrl);
                 Stream streamToReadFrom = await response.Content.ReadAsStreamAsync();
-                    
-            
-
-                //var client = new WebClient();
-                //var uri = new Uri(Furniture.ImageUrl);
-                //client.DownloadFile(uri, iFile);
-                //System.Threading.Thread.Sleep(30);
-                //var fInfo = new FileInfo(iFile);
-                //long numBytes = fInfo.Length;
-                //var fStream = new FileStream(iFile, FileMode.Open, FileAccess.Read);
                 var br = new BinaryReader(streamToReadFrom);
                 Furniture.Image = null;
-                //Furniture.Image = br.ReadBytes((int)numBytes);
                 Furniture.Image = br.ReadBytes((int)streamToReadFrom.Length);
             }
             catch (Exception e)

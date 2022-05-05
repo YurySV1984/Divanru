@@ -90,7 +90,7 @@
                     </Button>
                 </DockPanel>
                 <DockPanel DockPanel.Dock="Bottom">
-                    <ListBox SelectedIndex="{Binding Path=SelectedCat}"  ItemsSource="{Binding Cats}"/>
+                    <ListBox SelectedIndex="{Binding Path=SelectedCat}"  ItemsSource="{Binding CategoriesListBox}"/>
                 </DockPanel>
             </DockPanel>
 
@@ -107,19 +107,19 @@
                         <TextBlock TextWrapping="Wrap" Text="Copy selected product to the Database" TextAlignment="Center"/>
                     </Button.Content>
                 </Button>
-                <ProgressBar Height="20" Margin="5,20,5,0"  Minimum="0" Maximum="{Binding BarMax}" Value="{Binding BarValue}"/>
+                <ProgressBar Height="20" Margin="5,20,5,0"  Minimum="0" Maximum="{Binding ProgressBarMax}" Value="{Binding ProgressBarValue}"/>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="5">
                     <TextBlock Text="Parsed "/>
-                    <TextBlock Text="{Binding BarValue}"/>
+                    <TextBlock Text="{Binding ProgressBarValue}"/>
                     <TextBlock Text=" of "/>
-                    <TextBlock Text="{Binding BarMax}"/>
+                    <TextBlock Text="{Binding ProgressBarMax}"/>
                     <TextBlock Text=" pages"/>
                 </StackPanel>
             </StackPanel>
 
             <DockPanel Grid.Column="5" Grid.RowSpan="4">
                 <DockPanel Margin="5" Height="25" HorizontalAlignment="Stretch" DockPanel.Dock="Top">
-                    <Label Content="{Binding Prodscount}"/>
+                    <Label Content="{Binding ProductsCount}"/>
                     <Button  Margin="0,0,0,0" HorizontalAlignment="Right" Command="{Binding OpenProductSiteCommand}">
                         <Button.Content>
                             <TextBlock TextWrapping="Wrap" Text="Open product site" TextAlignment="Center"/>
@@ -127,7 +127,7 @@
                     </Button>
                 </DockPanel>
                 <DockPanel DockPanel.Dock="Bottom">
-                    <ListBox SelectedIndex="{Binding SelectedProd}" ItemsSource="{Binding Prods}"/>
+                    <ListBox SelectedIndex="{Binding SelectedProduct}" ItemsSource="{Binding ProductsListBox}"/>
                 </DockPanel>
             </DockPanel>
 
@@ -199,13 +199,13 @@
                 </TextBlock>
             </DockPanel>
             <DockPanel Grid.Column="9" Grid.Row="2" Grid.ColumnSpan="2" Background="Azure">
-            <ListBox Margin="0,5"  HorizontalAlignment="Stretch" ItemsSource="{Binding DBProds}" SelectedIndex="{Binding SelectedDBProd}"/>
+            <ListBox Margin="0,5"  HorizontalAlignment="Stretch" ItemsSource="{Binding DBProductsList}" SelectedIndex="{Binding SelectedDBProduct}"/>
             </DockPanel>
             <DockPanel Grid.Column="7" Grid.Row="3" Grid.ColumnSpan="2" Background="MistyRose">
             <TextBlock FontWeight="ExtraBold" Text="Notifications: "  HorizontalAlignment="Right" Margin="5" FontSize="20" VerticalAlignment="Center"/>
             </DockPanel>
             <DockPanel Grid.Column="9" Grid.Row="3" Grid.ColumnSpan="2" Background="MistyRose">
-            <ListBox Margin="0,5" HorizontalAlignment="Stretch" ItemsSource="{Binding Nots}" SelectedIndex="{Binding SelectedLog}" ScrollViewer.ScrollChanged="ListBox_ScrollChanged"/>
+                <ListBox Margin="0,5" HorizontalAlignment="Stretch" ItemsSource="{Binding Notifications}" ScrollViewer.ScrollChanged="ListBox_ScrollChanged"/>
             </DockPanel>
         </Grid>
     </DockPanel>

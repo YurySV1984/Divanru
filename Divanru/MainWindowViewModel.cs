@@ -17,14 +17,14 @@ using System.Windows.Threading;
 namespace Divanru
 {
     internal class MainWindowViewModel : ViewModel
-    {
-        public static int curp = 0;
-        public static int maxp = 0;
-        
-        private Categories cts = new Categories();
-        private Products prds = new Products();
+    {       
+        private Categories categories = new Categories();
+        private Products products = new Products();
         private SFurniture[] sfurTable;
         private DB db = new DB();
+
+        const string productUrl = "https://www.divan.ru/ekaterinburg/product/";
+        const string categoryUrl = "https://www.divan.ru/ekaterinburg/category/";
 
         #region Title
         private string _title = "Divanru parser";
@@ -32,18 +32,11 @@ namespace Divanru
         public string Title
         {
             get { return _title; }
-            //set
-            //{
-            //    if (_title == value) return;
-            //    _title = value;
-            //    OnPropertyChanged();
-            //    Set(ref _title, value);
-            //}
             set => Set(ref _title, value);
         }
         #endregion
 
-        #region status
+        #region Status
         private string _status = "Ready";
         public string Status
         { 
@@ -53,11 +46,11 @@ namespace Divanru
         #endregion
 
         #region Categories
-        private ObservableCollection<string> _cats = new ObservableCollection<string>();
-        public ObservableCollection<string> Cats
+        private ObservableCollection<string> _categoriesListBox = new ObservableCollection<string>();
+        public ObservableCollection<string> CategoriesListBox
         {
-            get {return _cats; }
-            set { Set(ref _cats, value); }
+            get {return _categoriesListBox; }
+            set { Set(ref _categoriesListBox, value); }
         }
         private int _selectedCat = -1;
         public int SelectedCat
@@ -68,43 +61,38 @@ namespace Divanru
         #endregion
 
         #region Products
-        private ObservableCollection<string> _prods = new ObservableCollection<string>();
-        public ObservableCollection<string> Prods
+        private ObservableCollection<string> _productsListBox = new ObservableCollection<string>();
+        public ObservableCollection<string> ProductsListBox
         {
-            get {return _prods; }
-            set { Set(ref _prods, value); }
+            get {return _productsListBox; }
+            set { Set(ref _productsListBox, value); }
         }
-        private int _selectedProd = -1;
-        public int SelectedProd
+        private int _selectedProduct = -1;
+        public int SelectedProduct
         {
-            get { return _selectedProd; }
-            set { Set(ref _selectedProd, value); }
+            get { return _selectedProduct; }
+            set { Set(ref _selectedProduct, value); }
         }
-        public void AddProd(string title)
+        private string _productsCount;
+        public string ProductsCount
         {
-            Prods.Add(title);
-            OnPropertyChanged("Prods");
-        }
-        private string _prodscount;
-        public string Prodscount
-        {
-            get { return "Products: " + _prodscount; }
-            set { Set(ref _prodscount, value); }
+            get { return "Products: " + _productsCount; }
+            set { Set(ref _productsCount, value); }
         }
         #endregion
 
         #region DBlist
-        private ObservableCollection<string> _dbprods = new ObservableCollection<string>();
-        public ObservableCollection<string> DBProds
+        private ObservableCollection<string> _dbProductsList = new ObservableCollection<string>();
+        public ObservableCollection<string> DBProductsList
         {
-            get { return _dbprods; }
-            set { Set(ref _dbprods, value); }
+            get { return _dbProductsList; }
+            set { Set(ref _dbProductsList, value); }
         }
-        private int _selectedDBProd = -1;
-        public int SelectedDBProd
+        private int _selectedDBProduct = -1;
+        public int SelectedDBProduct
         {
-            get { return _selectedDBProd; }
-            set { Set(ref _selectedDBProd, value); }
+            get { return _selectedDBProduct; }
+            set { Set(ref _selectedDBProduct, value); }
         }
         #endregion
 
@@ -117,22 +105,22 @@ namespace Divanru
         }
         #endregion
 
-        #region Nots
-        private ObservableCollection<string> _nots = new ObservableCollection<string>();
-        public ObservableCollection<string> Nots
+        #region Notifications
+        private ObservableCollection<string> _notifications = new ObservableCollection<string>();
+        public ObservableCollection<string> Notifications
         {
-            get { return _nots; }
-            set { Set(ref _nots, value, "Nots"); }
+            get { return _notifications; }
+            set { Set(ref _notifications, value, "Nots"); }
         }
-        private int _selectedLog;
-        public int SelectedLog
+        //private int _selectedLog;
+        //public int SelectedLog
+        //{
+        //    get { return _selectedLog; }
+        //    set { Set(ref _selectedLog, value); }
+        //}
+        private void NotificationWrite(object sender, ErrEventArgs e)
         {
-            get { return _selectedLog; }
-            set { Set(ref _selectedLog, value); }
-        }
-        private void LogWrite(object sender, ErrEventArgs e)
-        {
-            Nots.Add(e.ErrorText);            
+            Notifications.Add(e.ErrorText);            
         }
         #endregion
 
@@ -145,7 +133,7 @@ namespace Divanru
         }
         #endregion
 
-        #region cursor
+        #region Cursor
         private Cursor _cursor = Cursors.Arrow;
         public Cursor WinCursor 
         {
@@ -317,33 +305,34 @@ namespace Divanru
         #endregion
 
         #region ProgressBar
-        private int _barMax = 0;
-        public int BarMax
+        private int _progressBarMax = 0;
+        public int ProgressBarMax
         {
-            get { return _barMax; }
-            set { Set(ref _barMax, value); }
+            get { return _progressBarMax; }
+            set { Set(ref _progressBarMax, value); }
         }
-        private int _barMin = 0;
-        public int BarMin
+        //private int _progressBarMin = 0;
+        //public int ProgressBarMin
+        //{
+        //    get { return _progressBarMin; }
+        //    set { Set(ref _progressBarMin, value); }
+        //}
+        private int _progressBarValue = 0;
+        public int ProgressBarValue
         {
-            get { return _barMin; }
-            set { Set(ref _barMin, value); }
-        }
-        private int _barValue = 0;
-        public int BarValue
-        {
-            get { return _barValue; }
-            set { Set(ref _barValue, value); }
+            get { return _progressBarValue; }
+            set { Set(ref _progressBarValue, value); }
         }
         private bool _barEnabled = false;
         public bool BarEnabled
         { get { return _barEnabled; } set { Set(ref _barEnabled, value);} }
-        #endregion
-        private void SetBar(object sender, CatParsingEventArgs e)
+        
+        private void SetProgressBar(object sender, CatParsingEventArgs e)
         {
-            BarMax = e.MaxVal;
-            BarValue = e.Val;
+            ProgressBarMax = e.MaxVal;
+            ProgressBarValue = e.Val;
         }
+        #endregion
 
         public MainWindowViewModel()
         {
@@ -368,10 +357,10 @@ namespace Divanru
         private async void OnFindCategoriesCommandExecuted(object p)
         {
             DisableControls();
-            cts.OnError += new EventHandler<ErrEventArgs>(LogWrite);
-            await cts.ParseCats();
-            cts.OnError -= new EventHandler<ErrEventArgs>(LogWrite);
-            Cats = cts.GetList();
+            categories.OnError += new EventHandler<ErrEventArgs>(NotificationWrite);
+            await categories.FindCategories();
+            categories.OnError -= new EventHandler<ErrEventArgs>(NotificationWrite);
+            CategoriesListBox = categories.GetList();
             EnableControls();
         }
         #endregion
@@ -383,15 +372,15 @@ namespace Divanru
         {
             if (SelectedCat == -1) return;
             DisableControls();
-            prds.Clear();
-            BarValue = 0;
-            cts.OnError += new EventHandler<ErrEventArgs>(LogWrite);
-            cts.OnParsing += new EventHandler<CatParsingEventArgs>(SetBar);
-            await cts.ParseProductsOneCat(cts[SelectedCat].link);
-            cts.OnError -= new EventHandler<ErrEventArgs>(LogWrite);
-            cts.OnParsing -= new EventHandler<CatParsingEventArgs>(SetBar);
-            Prods = prds.GetList();
-            Prodscount = Prods.Count.ToString();
+            products.Clear();
+            ProgressBarValue = 0;
+            categories.OnError += new EventHandler<ErrEventArgs>(NotificationWrite);
+            categories.OnParsing += new EventHandler<CatParsingEventArgs>(SetProgressBar);
+            products.AddRange(await categories.ParseProductsOneCat(categoryUrl + categories[SelectedCat].link));
+            categories.OnError -= new EventHandler<ErrEventArgs>(NotificationWrite);
+            categories.OnParsing -= new EventHandler<CatParsingEventArgs>(SetProgressBar);
+            ProductsListBox = products.GetList();
+            ProductsCount = ProductsListBox.Count.ToString();
             EnableControls();
         }
         #endregion
@@ -401,38 +390,38 @@ namespace Divanru
         private bool CanParseAllCategoriesCommand(object p) => true;
         private async void OnParseAllCategoriesCommandExecuted(object p)
         {
-            if (Categories.Count == 0) return;
+            if (categories.Count == 0) return;
             DisableControls();
             int counter = 0;
-            prds.Clear();
-            Prods.Clear();
-            BarMax = Categories.Count;
-            //for (int i = 0; i < 9; i++)
-            for (int i = 0; i < Categories.Count; i++)
-                //foreach (var cat in cats)
-                {
-                //BarMax = 9;
-                BarValue = i + 1;
-                cts.OnError += new EventHandler<ErrEventArgs>(LogWrite);
-                await cts.ParseProductsOneCat(cts[i].link);
-                cts.OnError -= new EventHandler<ErrEventArgs>(LogWrite);
-                for (; counter < prds.Count; counter++)
-                {
-                    AddProd(prds[counter].title);
-                    Prodscount = Prods.Count.ToString();
-                }
-            }
-            prds.OrdBy();
-
-            Prods.Clear();
-            for (int i = 0; i < prds.Count - 1; i++)
+            products.Clear();
+            ProductsListBox.Clear();
+            ProgressBarMax = 9;
+            //ProgressBarMax = categories.Count;
+            for (int i = 0; i < 9; i++)                //для демонстрации стоит ограничение только на 9 катогорий
+            //for (int i = 0; i < categories.Count; i++)
+            //foreach (var cat in categories)
             {
-                if (prds[i + 1].title == prds[i].title)
-                    prds.RemoveAt(i + 1);
-                Prods.Add(prds[i].title);
+                categories.OnError += new EventHandler<ErrEventArgs>(NotificationWrite);
+                products.AddRange(await categories.ParseProductsOneCat(categoryUrl + categories[i].link));
+                categories.OnError -= new EventHandler<ErrEventArgs>(NotificationWrite);
+                for (; counter < products.Count; counter++)
+                {
+                    ProductsListBox.Add(products[counter].title);
+                    ProductsCount = ProductsListBox.Count.ToString();
+                }
+                ProgressBarValue = i + 1;
             }
-            Prodscount = Prods.Count.ToString();
-            Prods = prds.GetList();
+            products.OrdBy();
+
+            ProductsListBox.Clear();
+            for (int i = 0; i < products.Count - 1; i++)
+            {
+                if (products[i + 1].title == products[i].title)
+                    products.RemoveAt(i + 1);
+            }
+            ProductsListBox = products.GetList();
+            ProductsCount = ProductsListBox.Count.ToString();
+            
             EnableControls();
         }
         #endregion
@@ -443,25 +432,24 @@ namespace Divanru
         private async void OnCopyCatToDbCommandExecuted(object p)
         {
             if (SelectedCat == -1) return;
-            prds.Clear();
-            Prods.Clear();
-            Prodscount = "";
+            products.Clear();
+            ProductsListBox.Clear();
+            ProductsCount = "";
             DisableControls();
-            cts.OnError += new EventHandler<ErrEventArgs>(LogWrite);
-            await cts.ParseProductsOneCat(cts[SelectedCat].link);
-            cts.OnError -= new EventHandler<ErrEventArgs>(LogWrite);
-            for (int i = 0; i < prds.Count; i++)
+            categories.OnError += new EventHandler<ErrEventArgs>(NotificationWrite);
+            products.AddRange(await categories.ParseProductsOneCat(categoryUrl + categories[SelectedCat].link));
+            categories.OnError -= new EventHandler<ErrEventArgs>(NotificationWrite);
+            for (int i = 0; i < products.Count; i++)
             {
-                
-                Prods.Add(prds[i].title);
-                Prodscount = Prods.Count.ToString() + " of " + prds.Count;
-                prds.OnError += new EventHandler<ErrEventArgs>(LogWrite);
-                await prds.GetOneProduct(prds[i].link);
-                prds.OnError -= new EventHandler<ErrEventArgs>(LogWrite);
+                ProductsListBox.Add(products[i].title);
+                ProductsCount = ProductsListBox.Count + " of " + products.Count;
+                products.OnError += new EventHandler<ErrEventArgs>(NotificationWrite);
+                await products.GetOneProduct(productUrl + products[i].link);
+                products.OnError -= new EventHandler<ErrEventArgs>(NotificationWrite);
                 WriteLabels();
-                db.OnError += new EventHandler<ErrEventArgs>(LogWrite);
+                db.OnError += new EventHandler<ErrEventArgs>(NotificationWrite);
                 db.CopyProductToDB();
-                db.OnError -= new EventHandler<ErrEventArgs>(LogWrite);
+                db.OnError -= new EventHandler<ErrEventArgs>(NotificationWrite);
             }
             EnableControls();
         }
@@ -473,7 +461,7 @@ namespace Divanru
         private void OnOpenCategorySiteExecuted(object p)
         {
             if (SelectedCat == -1) return;
-            System.Diagnostics.Process.Start("explorer.exe", "https://www.divan.ru" + cts[SelectedCat].link);
+            System.Diagnostics.Process.Start("explorer.exe", categoryUrl + categories[SelectedCat].link);
         }
         #endregion
 
@@ -482,8 +470,8 @@ namespace Divanru
         private bool CanOpenProductSite(object p) => true;
         private void OnOpenProductSiteExecuted(object p)
         {
-            if (SelectedProd == -1) return;
-            System.Diagnostics.Process.Start("explorer.exe", "https://www.divan.ru" + prds[SelectedProd].link);
+            if (SelectedProduct == -1) return;
+            System.Diagnostics.Process.Start("explorer.exe", productUrl + products[SelectedProduct].link);
         }
         #endregion
 
@@ -493,7 +481,7 @@ namespace Divanru
         private void OnOpenDescriptonProductSiteExecuted(object p)
         {
             if (Furniture.Link == null) return;
-            System.Diagnostics.Process.Start("explorer.exe", "https://www.divan.ru" + Furniture.Link);
+            System.Diagnostics.Process.Start("explorer.exe", productUrl + Furniture.Link);
         }
         #endregion
 
@@ -502,11 +490,11 @@ namespace Divanru
         private bool CanLoadSelectedProductCommand(object p) => true;
         private async void OnLoadSelectedProductCommandExecuted(object p)
         {
-            if (SelectedProd == -1) return;
+            if (SelectedProduct == -1) return;
             DisableControls();
-            prds.OnError += new EventHandler<ErrEventArgs>(LogWrite);
-            await prds.GetOneProduct(prds[SelectedProd].link);
-            prds.OnError -= new EventHandler<ErrEventArgs>(LogWrite);
+            products.OnError += new EventHandler<ErrEventArgs>(NotificationWrite);
+            await products.GetOneProduct(productUrl + products[SelectedProduct].link);
+            products.OnError -= new EventHandler<ErrEventArgs>(NotificationWrite);
             WriteLabels();
             EnableControls();
         }
@@ -517,16 +505,16 @@ namespace Divanru
         private bool CanCopyProductToDb(object p) => true;
         private async void OnCopyProductToDbExecuted(object p)
         {
-            if (SelectedProd == -1) return;
+            if (SelectedProduct == -1) return;
             DisableControls();
-            prds.OnError += new EventHandler<ErrEventArgs>(LogWrite);
-            await prds.GetOneProduct(prds[SelectedProd].link);
-            prds.OnError -= new EventHandler<ErrEventArgs>(LogWrite);
+            products.OnError += new EventHandler<ErrEventArgs>(NotificationWrite);
+            await products.GetOneProduct(productUrl + products[SelectedProduct].link);
+            products.OnError -= new EventHandler<ErrEventArgs>(NotificationWrite);
             WriteLabels();
             EnableControls();
-            db.OnError += new EventHandler<ErrEventArgs>(LogWrite);
+            db.OnError += new EventHandler<ErrEventArgs>(NotificationWrite);
             db.CopyProductToDB();
-            db.OnError -= new EventHandler<ErrEventArgs>(LogWrite);
+            db.OnError -= new EventHandler<ErrEventArgs>(NotificationWrite);
         }
 
         
@@ -537,12 +525,12 @@ namespace Divanru
         private bool CanSearchProductsInDB(object p) => true;
         private void OnSearchProductsInDBExecuted(object p)
         {
-            DBProds.Clear();
-            db.OnError += new EventHandler<ErrEventArgs>(LogWrite);
+            DBProductsList.Clear();
+            db.OnError += new EventHandler<ErrEventArgs>(NotificationWrite);
             sfurTable = db.SearchInDb(SearchText);
-            db.OnError -= new EventHandler<ErrEventArgs>(LogWrite);
+            db.OnError -= new EventHandler<ErrEventArgs>(NotificationWrite);
             if (sfurTable != null)
-                DBProds = SFurniture.GetModels(sfurTable);
+                DBProductsList = SFurniture.GetModels(sfurTable);
         }
         #endregion
 
@@ -551,11 +539,11 @@ namespace Divanru
         private bool CanOpenProductFromDB(object p) => true;
         private void OnOpenProductFromDBExecuted(object p)
         {
-            if (SelectedDBProd == -1) return;
+            if (SelectedDBProduct == -1) return;
             DisableControls();
-            db.OnError += new EventHandler<ErrEventArgs>(LogWrite);
-            db.OpenProductFromDB(sfurTable[SelectedDBProd].id);
-            db.OnError -= new EventHandler<ErrEventArgs>(LogWrite);
+            db.OnError += new EventHandler<ErrEventArgs>(NotificationWrite);
+            db.OpenProductFromDB(sfurTable[SelectedDBProduct].id);
+            db.OnError -= new EventHandler<ErrEventArgs>(NotificationWrite);
             WriteLabels();
             EnableControls();
         }
@@ -566,11 +554,11 @@ namespace Divanru
         private bool CanDeleteProductFromDB(object p) => true;
         private void OnDeleteProductFromDB(object p)
         {
-            if(SelectedDBProd == -1) return;
-            db.OnError += new EventHandler<ErrEventArgs>(LogWrite);
-            db.DeleteProductFromDB(sfurTable[SelectedDBProd].id, sfurTable[SelectedDBProd].model);
+            if(SelectedDBProduct == -1) return;
+            db.OnError += new EventHandler<ErrEventArgs>(NotificationWrite);
+            db.DeleteProductFromDB(sfurTable[SelectedDBProduct].id, sfurTable[SelectedDBProduct].model);
             OnSearchProductsInDBExecuted(p);
-            db.OnError -= new EventHandler<ErrEventArgs>(LogWrite);
+            db.OnError -= new EventHandler<ErrEventArgs>(NotificationWrite);
         }
         #endregion
 

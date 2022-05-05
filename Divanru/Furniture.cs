@@ -36,17 +36,6 @@ namespace Divanru
         public static string[] Size { get; set; }
         public static string[] Characteristics { get; set; }
         public static byte[] Image { get; set; }
-
-
-        public string[] categories { get; set; }
-        public string description { get; set; }
-        public string price { get; set; }
-        public string oldPrice { get; set; }
-        public string link { get; set; }
-        public string imageUrl { get; set; }
-        public string[] size { get; set; }
-        public string[] characteristics { get; set; }
-        public byte[] image { get; set; }
     }
 
 }

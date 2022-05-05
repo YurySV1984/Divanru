@@ -17,34 +17,41 @@ namespace Divanru
 
         public event EventHandler<ErrEventArgs> OnError;
         public event EventHandler<CatParsingEventArgs> OnParsing;
-        private static List<ListElement> _cats = new List<ListElement>();      //лист с категориями
 
+        private List<ListElement> _categories = new List<ListElement>();      //лист с категориями
+
+        /// <summary>
+        /// indexer
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
         public ListElement this [int index]
         { 
-            get { return _cats [index]; }
-            set { _cats[index] = value; }
+            get { return _categories [index]; }
+            //set { _categories[index] = value; }
         }
 
+        /// <summary>
+        /// возвращает коллекцию из названия для листбокса
+        /// </summary>
+        /// <returns></returns>
         public ObservableCollection<string> GetList()
         {
             ObservableCollection<string> list = new ObservableCollection<string>();
-            //foreach (var item in _cats)
-            for (int i = 0; i < _cats.Count; i++)
-                list.Add(_cats[i].title);
-                
+            _categories.ForEach(c => list.Add(c.title));
             return list;
         }
 
-        public static int Count { get { return _cats.Count; } }
+        public int Count { get { return _categories.Count; } }
 
         /// <summary>
-        /// Парсит категории товаров на сайте
+        /// Ищет категории товаров на сайте
         /// </summary>
         /// <param name="url"></param>
         /// <returns></returns>
-        public async Task ParseCats(string url = siteurl)
+        public async Task FindCategories(string url = siteurl)
         {
-            _cats.Clear();
+            _categories.Clear();
             var httpclient = new HttpClient();
 
             try
@@ -64,18 +71,18 @@ namespace Divanru
 
                     foreach (Match match in matches)
                     {
-                        var el = new ListElement();
+                        var element = new ListElement();
                         startindex = match.Value.IndexOf("\"name\":\"") + 8;
                         endindex = match.Value.IndexOf("\"", startindex);
-                        el.title = match?.Value.Substring(startindex, endindex - startindex);
-                        startindex = match.Value.IndexOf("\"url\":\"") + 7;
+                        element.title = match?.Value.Substring(startindex, endindex - startindex);
+                        startindex = match.Value.IndexOf("\"url\":\"") + 45;
                         endindex = match.Value.Length;
-                        el.link = match?.Value.Substring(startindex, endindex - startindex).Replace("\\u002F", "/");
+                        element.link = match?.Value.Substring(startindex, endindex - startindex);
 
-                        if (!el.link.Contains("skidki") && !el.link.Contains("rasprodaz") && !el.link.Contains("extra-sale") && !el.link.Contains("promo-bud") && (_cats.FindIndex(catsEl => catsEl.link == el.link) == -1))
-                            _cats.Add(el);
+                        if (!element.link.Contains("skidki") && !element.link.Contains("rasprodaz") && !element.link.Contains("extra-sale") && !element.link.Contains("promo-bud") && (_categories.FindIndex(catsEl => catsEl.link == element.link) == -1))
+                            _categories.Add(element);
                     }
-                    _cats = _cats.OrderBy(el => el.title).ToList();
+                    _categories = _categories.OrderBy(element => element.title).ToList();
                 }
             }
             catch (Exception e)
@@ -91,46 +98,43 @@ namespace Divanru
         /// </summary>
         /// <param name="url"></param>
         /// <returns></returns> 
-        public async Task ParseProductsOneCat(string url)
+        public async Task<List<ListElement>> ParseProductsOneCat(string url)
         {
+            List<ListElement> productsList = new List<ListElement>();
             try
             {
-                List<ListElement> productsint = new List<ListElement>();
                 var httpclient = new HttpClient();
-                var html = await httpclient.GetStringAsync("https://www.divan.ru" + url);
+                var html = await httpclient.GetStringAsync(url);
                 var htmlDocument = new HtmlAgilityPack.HtmlDocument();
                 htmlDocument.LoadHtml(html);
 
-                CheckProduct(ref productsint, htmlDocument);
+                CheckProduct(ref productsList, in htmlDocument);
 
-
-                var lastp = 1;
-                var lastpages = htmlDocument.DocumentNode.Descendants("a")
+                var lastPage = 1;
+                var lastpageNodes = htmlDocument.DocumentNode.Descendants("a")
                     .Where(node => node.GetAttributeValue("class", "").Equals("ImmXq R9QDJ hi0qF PaginationLink")).ToList();
-                foreach (var lastpage in lastpages)
+                foreach (var lastPageNode in lastpageNodes)
                 {
-                    if (int.TryParse(lastpage.InnerHtml, out int page))
-                        lastp = page > lastp ? page : lastp;
+                    if (int.TryParse(lastPageNode.InnerHtml, out int page))
+                        lastPage = page > lastPage ? page : lastPage;
                 }
 
-                OnParsing?.Invoke(this, new CatParsingEventArgs(lastp, 1));
-                for (int i = 2; i <= lastp; i++)
+                OnParsing?.Invoke(this, new CatParsingEventArgs(lastPage, 1));
+                for (int i = 2; i <= lastPage; i++)
                 {
                     httpclient = new HttpClient();
-                    html = await httpclient.GetStringAsync("https://www.divan.ru" + url + "/page-" + i);
+                    html = await httpclient.GetStringAsync(url + "/page-" + i);
                     htmlDocument = new HtmlAgilityPack.HtmlDocument();
                     htmlDocument.LoadHtml(html);
-                    CheckProduct(ref productsint, htmlDocument);
-                    OnParsing?.Invoke(this, new CatParsingEventArgs(lastp, i));
-
-                }
-                //for (int i = 0; i < products.Count; i++) Products.Add(products[i]);
-                Products.AddRange(productsint);
+                    CheckProduct(ref productsList, in htmlDocument);
+                    OnParsing?.Invoke(this, new CatParsingEventArgs(lastPage, i));
+                }               
             }
             catch (Exception e)
             {
                 OnError?.Invoke(this, new ErrEventArgs(e.Message));
             }
+            return productsList;
 
         }
 
@@ -139,7 +143,7 @@ namespace Divanru
         /// </summary>
         /// <param name="products"></param>
         /// <param name="htmlDocument"></param>
-        private static void CheckProduct(ref List<ListElement> products, HtmlAgilityPack.HtmlDocument htmlDocument)
+        private void CheckProduct(ref List<ListElement> products, in HtmlAgilityPack.HtmlDocument htmlDocument)
         {
             var divs =
                 htmlDocument.DocumentNode.Descendants()
@@ -147,7 +151,7 @@ namespace Divanru
             foreach (var div in divs)
             {
                 var listElement = new ListElement();
-                listElement.link = div.GetAttributeValue("href", "").ToString();
+                listElement.link = div.GetAttributeValue("href", "").Substring(22);
                 listElement.title = div.InnerText;
                 if (!listElement.title.Equals("Купить") && !listElement.title.Equals("") && !products.Contains(listElement))
                     products.Add(listElement);
