@@ -14,4 +14,15 @@ namespace Divanru
         }
         public string ErrorText { get; }
     }
+
+    public class CatParsingEventArgs
+    {
+        public CatParsingEventArgs(int MaxVal, int Val)
+        {
+            this.MaxVal = MaxVal;
+            this.Val = Val;
+        }
+        public int MaxVal;
+        public int Val;
+    }
 }

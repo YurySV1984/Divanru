@@ -76,6 +76,7 @@
     <Compile Include="Commands\Base\Command.cs" />
     <Compile Include="Commands\CloseApplicationCommand.cs" />
     <Compile Include="Commands\LambdaCommand.cs" />
+    <Compile Include="Commands\QuestionCommand.cs" />
     <Compile Include="ErrEventArgs.cs" />
     <Compile Include="MainWindowViewModel.cs" />
     <Compile Include="ViewModel.cs" />

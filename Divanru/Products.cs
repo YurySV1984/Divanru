@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -11,7 +12,7 @@ namespace Divanru
 {
     internal class Products
     {
-        private static List<ListElement> _products = new List<ListElement>();
+        private static ObservableCollection<ListElement> _products = new ObservableCollection<ListElement>();
         const string iFile = "image.jpg";
         public event EventHandler<ErrEventArgs> OnError;
         public ListElement this[int index]
@@ -19,9 +20,9 @@ namespace Divanru
             get { return _products[index]; }
             set { _products[index] = value; }
         }
-        public static int Count { get { return _products.Count; } }
+        public int Count { get { return _products.Count; } }
 
-        internal static void Clear()
+        internal void Clear()
         {
             _products.Clear();
         }
@@ -36,19 +37,19 @@ namespace Divanru
         //    return (List<ListElement>)_products.OrderBy(p => p.title);
         //}
 
-        internal static void OrderBy()
+        internal void OrdBy()
         {
             //return (List<ListElement>)_products.OrderBy(p => p.title);
-            _products = _products.OrderBy(p => p.title).ToList();
+            _products = new ObservableCollection<ListElement>(_products.OrderBy(p => p.title).ToList());
         }
 
-        internal static void RemoveAt(int v)
+        internal void RemoveAt(int v)
         {
             _products.RemoveAt(v);
         }
-        public List<string> GetList()
+        public ObservableCollection<string> GetList()
         {
-            List<string> list = new List<string>(_products.Count);
+            ObservableCollection<string> list = new ObservableCollection<string>();
             foreach (var item in _products)
                 list.Add(item.title);
             return list;
@@ -117,16 +118,24 @@ namespace Divanru
                 Furniture.ImageUrl = null;
                 Furniture.ImageUrl = imageUrlString.Substring(imageUrlStart, imageUrlEnd - imageUrlStart).Trim().Replace("\\u002F", "/");
 
-                var client = new WebClient();
-                var uri = new Uri(Furniture.ImageUrl);
-                client.DownloadFile(uri, iFile);
-                System.Threading.Thread.Sleep(20);
-                var fInfo = new FileInfo(iFile);
-                long numBytes = fInfo.Length;
-                var fStream = new FileStream(iFile, FileMode.Open, FileAccess.Read);
-                var br = new BinaryReader(fStream);
+                
+                httpclient = new HttpClient();
+                HttpResponseMessage response = await httpclient.GetAsync(Furniture.ImageUrl);
+                Stream streamToReadFrom = await response.Content.ReadAsStreamAsync();
+                    
+            
+
+                //var client = new WebClient();
+                //var uri = new Uri(Furniture.ImageUrl);
+                //client.DownloadFile(uri, iFile);
+                //System.Threading.Thread.Sleep(30);
+                //var fInfo = new FileInfo(iFile);
+                //long numBytes = fInfo.Length;
+                //var fStream = new FileStream(iFile, FileMode.Open, FileAccess.Read);
+                var br = new BinaryReader(streamToReadFrom);
                 Furniture.Image = null;
-                Furniture.Image = br.ReadBytes((int)numBytes);
+                //Furniture.Image = br.ReadBytes((int)numBytes);
+                Furniture.Image = br.ReadBytes((int)streamToReadFrom.Length);
             }
             catch (Exception e)
             {

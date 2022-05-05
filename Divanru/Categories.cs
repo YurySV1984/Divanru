@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -15,7 +16,7 @@ namespace Divanru
         const string catstring = "ekaterinburg\\u002Fcategory\\";
 
         public event EventHandler<ErrEventArgs> OnError;
-
+        public event EventHandler<CatParsingEventArgs> OnParsing;
         private static List<ListElement> _cats = new List<ListElement>();      //лист с категориями
 
         public ListElement this [int index]
@@ -24,9 +25,9 @@ namespace Divanru
             set { _cats[index] = value; }
         }
 
-        public List<string> GetList()
+        public ObservableCollection<string> GetList()
         {
-            List<string> list = new List<string>(_cats.Count);
+            ObservableCollection<string> list = new ObservableCollection<string>();
             //foreach (var item in _cats)
             for (int i = 0; i < _cats.Count; i++)
                 list.Add(_cats[i].title);
@@ -103,7 +104,7 @@ namespace Divanru
                 CheckProduct(ref productsint, htmlDocument);
 
 
-                var lastp = 0;
+                var lastp = 1;
                 var lastpages = htmlDocument.DocumentNode.Descendants("a")
                     .Where(node => node.GetAttributeValue("class", "").Equals("ImmXq R9QDJ hi0qF PaginationLink")).ToList();
                 foreach (var lastpage in lastpages)
@@ -111,6 +112,8 @@ namespace Divanru
                     if (int.TryParse(lastpage.InnerHtml, out int page))
                         lastp = page > lastp ? page : lastp;
                 }
+
+                OnParsing?.Invoke(this, new CatParsingEventArgs(lastp, 1));
                 for (int i = 2; i <= lastp; i++)
                 {
                     httpclient = new HttpClient();
@@ -118,6 +121,7 @@ namespace Divanru
                     htmlDocument = new HtmlAgilityPack.HtmlDocument();
                     htmlDocument.LoadHtml(html);
                     CheckProduct(ref productsint, htmlDocument);
+                    OnParsing?.Invoke(this, new CatParsingEventArgs(lastp, i));
 
                 }
                 //for (int i = 0; i < products.Count; i++) Products.Add(products[i]);
@@ -149,5 +153,7 @@ namespace Divanru
                     products.Add(listElement);
             }
         }
+
+        
     }
 }

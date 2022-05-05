@@ -1,6 +1,7 @@
 ﻿using Divanru.Commands.Base;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -8,17 +9,22 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 
 namespace Divanru
 {
     internal class MainWindowViewModel : ViewModel
     {
+        public static int curp = 0;
+        public static int maxp = 0;
+        
         private Categories cts = new Categories();
         private Products prds = new Products();
         private SFurniture[] sfurTable;
-        private readonly DB db = new DB();
+        private DB db = new DB();
 
         #region Title
         private string _title = "Divanru parser";
@@ -36,6 +42,7 @@ namespace Divanru
             set => Set(ref _title, value);
         }
         #endregion
+
         #region status
         private string _status = "Ready";
         public string Status
@@ -44,9 +51,10 @@ namespace Divanru
             set => Set(ref _status, value);
         }
         #endregion
+
         #region Categories
-        private List<string> _cats = new List<string>();
-        public List<string> Cats
+        private ObservableCollection<string> _cats = new ObservableCollection<string>();
+        public ObservableCollection<string> Cats
         {
             get {return _cats; }
             set { Set(ref _cats, value); }
@@ -60,8 +68,8 @@ namespace Divanru
         #endregion
 
         #region Products
-        private List<string> _prods = new List<string>();
-        public List<string> Prods
+        private ObservableCollection<string> _prods = new ObservableCollection<string>();
+        public ObservableCollection<string> Prods
         {
             get {return _prods; }
             set { Set(ref _prods, value); }
@@ -86,8 +94,8 @@ namespace Divanru
         #endregion
 
         #region DBlist
-        private List<string> _dbprods = new List<string>();
-        public List <string> DBProds
+        private ObservableCollection<string> _dbprods = new ObservableCollection<string>();
+        public ObservableCollection<string> DBProds
         {
             get { return _dbprods; }
             set { Set(ref _dbprods, value); }
@@ -110,8 +118,8 @@ namespace Divanru
         #endregion
 
         #region Nots
-        private List<string> _nots = new List<string>();
-        public List<string> Nots
+        private ObservableCollection<string> _nots = new ObservableCollection<string>();
+        public ObservableCollection<string> Nots
         {
             get { return _nots; }
             set { Set(ref _nots, value, "Nots"); }
@@ -125,9 +133,6 @@ namespace Divanru
         private void LogWrite(object sender, ErrEventArgs e)
         {
             Nots.Add(e.ErrorText);            
-            SelectedLog = Nots.Count - 1;
-            
-            OnPropertyChanged("Nots");
         }
         #endregion
 
@@ -150,21 +155,21 @@ namespace Divanru
         #endregion
 
         #region Description labels
-        private string _cat0 = "Category";
+        private string _cat0 = "";
         public string Cat0
         {
             get { return _cat0; }
             set { Set(ref _cat0, value); }
         }
 
-        private string _model = "Model:";
+        private string _model = "";
         public string Model
         {
             get { return _model; }
             set { Set(ref _model, value); }
         }
 
-        private string _price = "Price:";
+        private string _price = "";
         public string Price
         {
             get { return _price; }
@@ -178,14 +183,14 @@ namespace Divanru
             set { Set(ref _oldPrice, value); }
         }
 
-        private string _description = "Description";
+        private string _description = "";
         public string Description
         {
             get { return _description; }
             set { Set(ref _description, value); }
         }
 
-        private string _size = "Size: ";
+        private string _size = "";
         public string Size
         {
             get { return _size; }
@@ -311,6 +316,35 @@ namespace Divanru
         private void OnCloseApplicationCommandExecuted (object p) => Application.Current.Shutdown();
         #endregion
 
+        #region ProgressBar
+        private int _barMax = 0;
+        public int BarMax
+        {
+            get { return _barMax; }
+            set { Set(ref _barMax, value); }
+        }
+        private int _barMin = 0;
+        public int BarMin
+        {
+            get { return _barMin; }
+            set { Set(ref _barMin, value); }
+        }
+        private int _barValue = 0;
+        public int BarValue
+        {
+            get { return _barValue; }
+            set { Set(ref _barValue, value); }
+        }
+        private bool _barEnabled = false;
+        public bool BarEnabled
+        { get { return _barEnabled; } set { Set(ref _barEnabled, value);} }
+        #endregion
+        private void SetBar(object sender, CatParsingEventArgs e)
+        {
+            BarMax = e.MaxVal;
+            BarValue = e.Val;
+        }
+
         public MainWindowViewModel()
         {
             CloseApplicationCommand = new LambdaCommand(OnCloseApplicationCommandExecuted, CanCloseApplicationCommandExecute);
@@ -349,12 +383,15 @@ namespace Divanru
         {
             if (SelectedCat == -1) return;
             DisableControls();
-            Products.Clear();
+            prds.Clear();
+            BarValue = 0;
             cts.OnError += new EventHandler<ErrEventArgs>(LogWrite);
+            cts.OnParsing += new EventHandler<CatParsingEventArgs>(SetBar);
             await cts.ParseProductsOneCat(cts[SelectedCat].link);
             cts.OnError -= new EventHandler<ErrEventArgs>(LogWrite);
+            cts.OnParsing -= new EventHandler<CatParsingEventArgs>(SetBar);
             Prods = prds.GetList();
-            Prodscount = Products.Count.ToString();
+            Prodscount = Prods.Count.ToString();
             EnableControls();
         }
         #endregion
@@ -367,32 +404,35 @@ namespace Divanru
             if (Categories.Count == 0) return;
             DisableControls();
             int counter = 0;
-            Products.Clear();
-            for (int i = 0; i < 9; i++)
-            //foreach (var cat in cats)
-            {
+            prds.Clear();
+            Prods.Clear();
+            BarMax = Categories.Count;
+            //for (int i = 0; i < 9; i++)
+            for (int i = 0; i < Categories.Count; i++)
+                //foreach (var cat in cats)
+                {
+                //BarMax = 9;
+                BarValue = i + 1;
                 cts.OnError += new EventHandler<ErrEventArgs>(LogWrite);
                 await cts.ParseProductsOneCat(cts[i].link);
                 cts.OnError -= new EventHandler<ErrEventArgs>(LogWrite);
-                for (; counter < Products.Count; counter++)
+                for (; counter < prds.Count; counter++)
                 {
                     AddProd(prds[counter].title);
-                    Prodscount = Products.Count.ToString();
+                    Prodscount = Prods.Count.ToString();
                 }
             }
-            Products.OrderBy();
+            prds.OrdBy();
 
             Prods.Clear();
-            for (int i = 0; i < Products.Count - 1; i++)
+            for (int i = 0; i < prds.Count - 1; i++)
             {
                 if (prds[i + 1].title == prds[i].title)
-                    Products.RemoveAt(i + 1);
+                    prds.RemoveAt(i + 1);
                 Prods.Add(prds[i].title);
             }
-            Prodscount = Products.Count.ToString();
+            Prodscount = Prods.Count.ToString();
             Prods = prds.GetList();
-
-
             EnableControls();
         }
         #endregion
@@ -403,17 +443,18 @@ namespace Divanru
         private async void OnCopyCatToDbCommandExecuted(object p)
         {
             if (SelectedCat == -1) return;
+            prds.Clear();
             Prods.Clear();
             Prodscount = "";
             DisableControls();
             cts.OnError += new EventHandler<ErrEventArgs>(LogWrite);
             await cts.ParseProductsOneCat(cts[SelectedCat].link);
             cts.OnError -= new EventHandler<ErrEventArgs>(LogWrite);
-            for (int i = 0; i < Products.Count; i++)
+            for (int i = 0; i < prds.Count; i++)
             {
                 
                 Prods.Add(prds[i].title);
-                Prodscount = "Products: " + Prods.Count.ToString() + " of " + Products.Count;
+                Prodscount = Prods.Count.ToString() + " of " + prds.Count;
                 prds.OnError += new EventHandler<ErrEventArgs>(LogWrite);
                 await prds.GetOneProduct(prds[i].link);
                 prds.OnError -= new EventHandler<ErrEventArgs>(LogWrite);
@@ -533,6 +574,7 @@ namespace Divanru
         }
         #endregion
 
+        #region write labels
         private void WriteLabels()
         {
             Cat0 = (Furniture.Categories?.Length > 0 ? Furniture.Categories[0] : "") + (Furniture.Categories?.Length > 1 ? " / " + Furniture.Categories[1] : "") + (Furniture.Categories?.Length > 2 ? " / " + Furniture.Categories[2] : "");
@@ -557,9 +599,10 @@ namespace Divanru
             Ch13 = Furniture.Characteristics?.Length > 13 ? Furniture.Characteristics[13] : "";
             Link = Furniture.Link ?? "";
             Image = ToBitmapImage(Furniture.Image);
-            
         }
+        #endregion
 
+        #region convert byte[] to bitmap
         public static BitmapImage ToBitmapImage(byte[] data)
         {
             using (MemoryStream ms = new MemoryStream(data))
@@ -574,16 +617,19 @@ namespace Divanru
                 return img;
             }
         }
+        #endregion
 
         private void DisableControls()
         {
             ControlsEnabled = false;
             WinCursor = Cursors.Wait;
+            Status = "BUSY";
         }
         private void EnableControls()
         {
             ControlsEnabled = true;
             WinCursor = Cursors.Arrow;
+            Status = "Ready";
         }
 
     }

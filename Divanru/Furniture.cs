@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,9 +12,9 @@ namespace Divanru
         public string model { get; set; }
         public uint id { get; set; }
 
-        public static List<string> GetModels(SFurniture[] sFurTable)
+        public static ObservableCollection<string> GetModels(SFurniture[] sFurTable)
         {
-            List<string> res = new List<string>(sFurTable.Length);
+            ObservableCollection<string> res = new ObservableCollection<string>();
             for (int i = 0; i < sFurTable.Length; i++)
                 res.Add(sFurTable[i].model);
             return res;

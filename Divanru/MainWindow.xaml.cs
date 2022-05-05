@@ -26,7 +26,16 @@ namespace Divanru
         public MainWindow()
         {
             InitializeComponent();
-        }  
+        }
+
+        private void ListBox_ScrollChanged(object sender, ScrollChangedEventArgs e)
+        {
+            if (e.OriginalSource is ScrollViewer scrollViewer &&
+                Math.Abs(e.ExtentHeightChange) > 0.0)
+            {
+                scrollViewer.ScrollToBottom();
+            }
+        }
     }
 
 

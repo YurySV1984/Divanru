@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using MySql.Data.MySqlClient;
 
 namespace Divanru
@@ -73,31 +72,31 @@ namespace Divanru
 
             command = new MySqlCommand($"INSERT INTO `furniture` (`Categories0`, `Categories1`, `Categories2`, `Model`, `Description`, `Price`, `OldPrice`, `Link`, `size0`, `size1`, `size2`, `characteristics0`, `characteristics1`, `characteristics2`, `characteristics3`, `characteristics4`, `characteristics5`, `characteristics6`, `characteristics7`, `characteristics8`, `characteristics9`, `characteristics10`, `characteristics11`, `characteristics12`, `characteristics13`, `ImageUrl`, `Image`) VALUES (@Categories0, @Categories1, @Categories2, @Model, @Description, @Price, @OldPrice, @Link, @size0, @size1, @size2, @characteristics0, @characteristics1, @characteristics2, @characteristics3, @characteristics4, @characteristics5, @characteristics6, @characteristics7, @characteristics8, @characteristics9, @characteristics10, @characteristics11, @characteristics12, @characteristics13, @ImageUrl, @Image);", db.getConnection());
 
-            command.Parameters.Add("@Categories0", MySqlDbType.VarChar).Value = Furniture.Categories.Length > 0 ? Furniture.Categories[0] : "";
-            command.Parameters.Add("@Categories1", MySqlDbType.VarChar).Value = Furniture.Categories.Length > 1 ? Furniture.Categories[1] : "";
-            command.Parameters.Add("@Categories2", MySqlDbType.VarChar).Value = Furniture.Categories.Length > 2 ? Furniture.Categories[2] : "";
+            command.Parameters.Add("@Categories0", MySqlDbType.VarChar).Value = Furniture.Categories?.Length > 0 ? Furniture.Categories[0] : "";
+            command.Parameters.Add("@Categories1", MySqlDbType.VarChar).Value = Furniture.Categories?.Length > 1 ? Furniture.Categories[1] : "";
+            command.Parameters.Add("@Categories2", MySqlDbType.VarChar).Value = Furniture.Categories?.Length > 2 ? Furniture.Categories[2] : "";
             command.Parameters.Add("@Model", MySqlDbType.VarChar).Value = Furniture.Model;
             command.Parameters.Add("@Description", MySqlDbType.VarChar).Value = Furniture.Description ?? "";
             command.Parameters.Add("@Price", MySqlDbType.VarChar).Value = Furniture.Price ?? "";
             command.Parameters.Add("@OldPrice", MySqlDbType.VarChar).Value = Furniture.OldPrice ?? "";
             command.Parameters.Add("@Link", MySqlDbType.VarChar).Value = Furniture.Link ?? "";
-            command.Parameters.Add("@size0", MySqlDbType.VarChar).Value = Furniture.Size.Length > 0 ? Furniture.Size[0] : "";
-            command.Parameters.Add("@size1", MySqlDbType.VarChar).Value = Furniture.Size.Length > 1 ? Furniture.Size[1] : "";
-            command.Parameters.Add("@size2", MySqlDbType.VarChar).Value = Furniture.Size.Length > 2 ? Furniture.Size[2] : "";
-            command.Parameters.Add("@characteristics0", MySqlDbType.VarChar).Value = Furniture.Characteristics.Length > 0 ? Furniture.Characteristics[0] : "";
-            command.Parameters.Add("@characteristics1", MySqlDbType.VarChar).Value = Furniture.Characteristics.Length > 1 ? Furniture.Characteristics[1] : "";
-            command.Parameters.Add("@characteristics2", MySqlDbType.VarChar).Value = Furniture.Characteristics.Length > 2 ? Furniture.Characteristics[2] : "";
-            command.Parameters.Add("@characteristics3", MySqlDbType.VarChar).Value = Furniture.Characteristics.Length > 3 ? Furniture.Characteristics[3] : "";
-            command.Parameters.Add("@characteristics4", MySqlDbType.VarChar).Value = Furniture.Characteristics.Length > 4 ? Furniture.Characteristics[4] : "";
-            command.Parameters.Add("@characteristics5", MySqlDbType.VarChar).Value = Furniture.Characteristics.Length > 5 ? Furniture.Characteristics[5] : "";
-            command.Parameters.Add("@characteristics6", MySqlDbType.VarChar).Value = Furniture.Characteristics.Length > 6 ? Furniture.Characteristics[6] : "";
-            command.Parameters.Add("@characteristics7", MySqlDbType.VarChar).Value = Furniture.Characteristics.Length > 7 ? Furniture.Characteristics[7] : "";
-            command.Parameters.Add("@characteristics8", MySqlDbType.VarChar).Value = Furniture.Characteristics.Length > 8 ? Furniture.Characteristics[8] : "";
-            command.Parameters.Add("@characteristics9", MySqlDbType.VarChar).Value = Furniture.Characteristics.Length > 9 ? Furniture.Characteristics[9] : "";
-            command.Parameters.Add("@characteristics10", MySqlDbType.VarChar).Value = Furniture.Characteristics.Length > 10 ? Furniture.Characteristics[10] : "";
-            command.Parameters.Add("@characteristics11", MySqlDbType.VarChar).Value = Furniture.Characteristics.Length > 11 ? Furniture.Characteristics[11] : "";
-            command.Parameters.Add("@characteristics12", MySqlDbType.VarChar).Value = Furniture.Characteristics.Length > 12 ? Furniture.Characteristics[12] : "";
-            command.Parameters.Add("@characteristics13", MySqlDbType.VarChar).Value = Furniture.Characteristics.Length > 13 ? Furniture.Characteristics[13] : "";
+            command.Parameters.Add("@size0", MySqlDbType.VarChar).Value = Furniture.Size?.Length > 0 ? Furniture.Size[0] : "";
+            command.Parameters.Add("@size1", MySqlDbType.VarChar).Value = Furniture.Size?.Length > 1 ? Furniture.Size[1] : "";
+            command.Parameters.Add("@size2", MySqlDbType.VarChar).Value = Furniture.Size?.Length > 2 ? Furniture.Size[2] : "";
+            command.Parameters.Add("@characteristics0", MySqlDbType.VarChar).Value = Furniture.Characteristics?.Length > 0 ? Furniture.Characteristics[0] : "";
+            command.Parameters.Add("@characteristics1", MySqlDbType.VarChar).Value = Furniture.Characteristics?.Length > 1 ? Furniture.Characteristics[1] : "";
+            command.Parameters.Add("@characteristics2", MySqlDbType.VarChar).Value = Furniture.Characteristics?.Length > 2 ? Furniture.Characteristics[2] : "";
+            command.Parameters.Add("@characteristics3", MySqlDbType.VarChar).Value = Furniture.Characteristics?.Length > 3 ? Furniture.Characteristics[3] : "";
+            command.Parameters.Add("@characteristics4", MySqlDbType.VarChar).Value = Furniture.Characteristics?.Length > 4 ? Furniture.Characteristics[4] : "";
+            command.Parameters.Add("@characteristics5", MySqlDbType.VarChar).Value = Furniture.Characteristics?.Length > 5 ? Furniture.Characteristics[5] : "";
+            command.Parameters.Add("@characteristics6", MySqlDbType.VarChar).Value = Furniture.Characteristics?.Length > 6 ? Furniture.Characteristics[6] : "";
+            command.Parameters.Add("@characteristics7", MySqlDbType.VarChar).Value = Furniture.Characteristics?.Length > 7 ? Furniture.Characteristics[7] : "";
+            command.Parameters.Add("@characteristics8", MySqlDbType.VarChar).Value = Furniture.Characteristics?.Length > 8 ? Furniture.Characteristics[8] : "";
+            command.Parameters.Add("@characteristics9", MySqlDbType.VarChar).Value = Furniture.Characteristics?.Length > 9 ? Furniture.Characteristics[9] : "";
+            command.Parameters.Add("@characteristics10", MySqlDbType.VarChar).Value = Furniture.Characteristics?.Length > 10 ? Furniture.Characteristics[10] : "";
+            command.Parameters.Add("@characteristics11", MySqlDbType.VarChar).Value = Furniture.Characteristics?.Length > 11 ? Furniture.Characteristics[11] : "";
+            command.Parameters.Add("@characteristics12", MySqlDbType.VarChar).Value = Furniture.Characteristics?.Length > 12 ? Furniture.Characteristics[12] : "";
+            command.Parameters.Add("@characteristics13", MySqlDbType.VarChar).Value = Furniture.Characteristics?.Length > 13 ? Furniture.Characteristics[13] : "";
             command.Parameters.Add("@ImageUrl", MySqlDbType.VarChar).Value = Furniture.ImageUrl ?? "";
             command.Parameters.Add("@Image", MySqlDbType.Blob).Value = Furniture.Image ?? new byte[1];
 
