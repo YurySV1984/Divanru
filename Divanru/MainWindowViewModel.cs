@@ -17,14 +17,15 @@ using System.Windows.Threading;
 namespace Divanru
 {
     internal class MainWindowViewModel : ViewModel
-    {       
+    {
+        private Furniture furniture = new Furniture();
         private Categories categories = new Categories();
         private Products products = new Products();
-        private SFurniture[] sfurTable;
+        private SFurniture[] sFurnitureTable;
         private DB db = new DB();
 
-        const string productUrl = "https://www.divan.ru/ekaterinburg/product/";
-        const string categoryUrl = "https://www.divan.ru/ekaterinburg/category/";
+        private const string productUrl = "https://www.divan.ru/ekaterinburg/product/";
+        private const string categoryUrl = "https://www.divan.ru/ekaterinburg/category/";
 
         #region Title
         private string _title = "Divanru parser";
@@ -118,7 +119,7 @@ namespace Divanru
         //    get { return _selectedLog; }
         //    set { Set(ref _selectedLog, value); }
         //}
-        private void NotificationWrite(object sender, ErrEventArgs e)
+        private void NotificationWrite(object sender, EventArgs e)
         {
             Notifications.Add(e.ErrorText);            
         }
@@ -311,22 +312,18 @@ namespace Divanru
             get { return _progressBarMax; }
             set { Set(ref _progressBarMax, value); }
         }
-        //private int _progressBarMin = 0;
-        //public int ProgressBarMin
-        //{
-        //    get { return _progressBarMin; }
-        //    set { Set(ref _progressBarMin, value); }
-        //}
         private int _progressBarValue = 0;
         public int ProgressBarValue
-        {
-            get { return _progressBarValue; }
-            set { Set(ref _progressBarValue, value); }
+        { 
+            get { return _progressBarValue; } 
+            set { Set(ref _progressBarValue, value); } 
         }
         private bool _barEnabled = false;
         public bool BarEnabled
-        { get { return _barEnabled; } set { Set(ref _barEnabled, value);} }
-        
+        { 
+            get { return _barEnabled; } 
+            set { Set(ref _barEnabled, value);} 
+        }
         private void SetProgressBar(object sender, CatParsingEventArgs e)
         {
             ProgressBarMax = e.MaxVal;
@@ -357,9 +354,9 @@ namespace Divanru
         private async void OnFindCategoriesCommandExecuted(object p)
         {
             DisableControls();
-            categories.OnError += new EventHandler<ErrEventArgs>(NotificationWrite);
+            categories.OnError += new EventHandler<EventArgs>(NotificationWrite);
             await categories.FindCategories();
-            categories.OnError -= new EventHandler<ErrEventArgs>(NotificationWrite);
+            categories.OnError -= new EventHandler<EventArgs>(NotificationWrite);
             CategoriesListBox = categories.GetList();
             EnableControls();
         }
@@ -374,10 +371,10 @@ namespace Divanru
             DisableControls();
             products.Clear();
             ProgressBarValue = 0;
-            categories.OnError += new EventHandler<ErrEventArgs>(NotificationWrite);
+            categories.OnError += new EventHandler<EventArgs>(NotificationWrite);
             categories.OnParsing += new EventHandler<CatParsingEventArgs>(SetProgressBar);
-            products.AddRange(await categories.ParseProductsOneCat(categoryUrl + categories[SelectedCat].link));
-            categories.OnError -= new EventHandler<ErrEventArgs>(NotificationWrite);
+            products.AddRange(await categories.ParseProductsOneCat(categoryUrl + categories[SelectedCat].Link));
+            categories.OnError -= new EventHandler<EventArgs>(NotificationWrite);
             categories.OnParsing -= new EventHandler<CatParsingEventArgs>(SetProgressBar);
             ProductsListBox = products.GetList();
             ProductsCount = ProductsListBox.Count.ToString();
@@ -401,22 +398,22 @@ namespace Divanru
             //for (int i = 0; i < categories.Count; i++)
             //foreach (var cat in categories)
             {
-                categories.OnError += new EventHandler<ErrEventArgs>(NotificationWrite);
-                products.AddRange(await categories.ParseProductsOneCat(categoryUrl + categories[i].link));
-                categories.OnError -= new EventHandler<ErrEventArgs>(NotificationWrite);
+                categories.OnError += new EventHandler<EventArgs>(NotificationWrite);
+                products.AddRange(await categories.ParseProductsOneCat(categoryUrl + categories[i].Link));
+                categories.OnError -= new EventHandler<EventArgs>(NotificationWrite);
                 for (; counter < products.Count; counter++)
                 {
-                    ProductsListBox.Add(products[counter].title);
+                    ProductsListBox.Add(products[counter].Title);
                     ProductsCount = ProductsListBox.Count.ToString();
                 }
                 ProgressBarValue = i + 1;
             }
-            products.OrdBy();
+            products.OrderByTitle();
 
             ProductsListBox.Clear();
             for (int i = 0; i < products.Count - 1; i++)
             {
-                if (products[i + 1].title == products[i].title)
+                if (products[i + 1].Title == products[i].Title)
                     products.RemoveAt(i + 1);
             }
             ProductsListBox = products.GetList();
@@ -436,20 +433,20 @@ namespace Divanru
             ProductsListBox.Clear();
             ProductsCount = "";
             DisableControls();
-            categories.OnError += new EventHandler<ErrEventArgs>(NotificationWrite);
-            products.AddRange(await categories.ParseProductsOneCat(categoryUrl + categories[SelectedCat].link));
-            categories.OnError -= new EventHandler<ErrEventArgs>(NotificationWrite);
+            categories.OnError += new EventHandler<EventArgs>(NotificationWrite);
+            products.AddRange(await categories.ParseProductsOneCat(categoryUrl + categories[SelectedCat].Link));
+            categories.OnError -= new EventHandler<EventArgs>(NotificationWrite);
             for (int i = 0; i < products.Count; i++)
             {
-                ProductsListBox.Add(products[i].title);
+                ProductsListBox.Add(products[i].Title);
                 ProductsCount = ProductsListBox.Count + " of " + products.Count;
-                products.OnError += new EventHandler<ErrEventArgs>(NotificationWrite);
-                await products.GetOneProduct(productUrl + products[i].link);
-                products.OnError -= new EventHandler<ErrEventArgs>(NotificationWrite);
+                products.OnError += new EventHandler<EventArgs>(NotificationWrite);
+                await products.GetOneProduct(productUrl + products[i].Link, furniture);
+                products.OnError -= new EventHandler<EventArgs>(NotificationWrite);
                 WriteLabels();
-                db.OnError += new EventHandler<ErrEventArgs>(NotificationWrite);
-                db.CopyProductToDB();
-                db.OnError -= new EventHandler<ErrEventArgs>(NotificationWrite);
+                db.OnError += new EventHandler<EventArgs>(NotificationWrite);
+                db.CopyProductToDB(furniture);
+                db.OnError -= new EventHandler<EventArgs>(NotificationWrite);
             }
             EnableControls();
         }
@@ -461,7 +458,7 @@ namespace Divanru
         private void OnOpenCategorySiteExecuted(object p)
         {
             if (SelectedCat == -1) return;
-            System.Diagnostics.Process.Start("explorer.exe", categoryUrl + categories[SelectedCat].link);
+            System.Diagnostics.Process.Start("explorer.exe", categoryUrl + categories[SelectedCat].Link);
         }
         #endregion
 
@@ -471,7 +468,7 @@ namespace Divanru
         private void OnOpenProductSiteExecuted(object p)
         {
             if (SelectedProduct == -1) return;
-            System.Diagnostics.Process.Start("explorer.exe", productUrl + products[SelectedProduct].link);
+            System.Diagnostics.Process.Start("explorer.exe", productUrl + products[SelectedProduct].Link);
         }
         #endregion
 
@@ -480,8 +477,8 @@ namespace Divanru
         private bool CanOpenDescriptonProductSite(object p) => true;
         private void OnOpenDescriptonProductSiteExecuted(object p)
         {
-            if (Furniture.Link == null) return;
-            System.Diagnostics.Process.Start("explorer.exe", productUrl + Furniture.Link);
+            if (furniture.Link == null) return;
+            System.Diagnostics.Process.Start("explorer.exe", productUrl + furniture.Link);
         }
         #endregion
 
@@ -492,9 +489,9 @@ namespace Divanru
         {
             if (SelectedProduct == -1) return;
             DisableControls();
-            products.OnError += new EventHandler<ErrEventArgs>(NotificationWrite);
-            await products.GetOneProduct(productUrl + products[SelectedProduct].link);
-            products.OnError -= new EventHandler<ErrEventArgs>(NotificationWrite);
+            products.OnError += new EventHandler<EventArgs>(NotificationWrite);
+            await products.GetOneProduct(productUrl + products[SelectedProduct].Link, furniture);
+            products.OnError -= new EventHandler<EventArgs>(NotificationWrite);
             WriteLabels();
             EnableControls();
         }
@@ -507,14 +504,14 @@ namespace Divanru
         {
             if (SelectedProduct == -1) return;
             DisableControls();
-            products.OnError += new EventHandler<ErrEventArgs>(NotificationWrite);
-            await products.GetOneProduct(productUrl + products[SelectedProduct].link);
-            products.OnError -= new EventHandler<ErrEventArgs>(NotificationWrite);
+            products.OnError += new EventHandler<EventArgs>(NotificationWrite);
+            await products.GetOneProduct(productUrl + products[SelectedProduct].Link, furniture);
+            products.OnError -= new EventHandler<EventArgs>(NotificationWrite);
             WriteLabels();
             EnableControls();
-            db.OnError += new EventHandler<ErrEventArgs>(NotificationWrite);
-            db.CopyProductToDB();
-            db.OnError -= new EventHandler<ErrEventArgs>(NotificationWrite);
+            db.OnError += new EventHandler<EventArgs>(NotificationWrite);
+            db.CopyProductToDB(furniture);
+            db.OnError -= new EventHandler<EventArgs>(NotificationWrite);
         }
 
         
@@ -526,11 +523,11 @@ namespace Divanru
         private void OnSearchProductsInDBExecuted(object p)
         {
             DBProductsList.Clear();
-            db.OnError += new EventHandler<ErrEventArgs>(NotificationWrite);
-            sfurTable = db.SearchInDb(SearchText);
-            db.OnError -= new EventHandler<ErrEventArgs>(NotificationWrite);
-            if (sfurTable != null)
-                DBProductsList = SFurniture.GetModels(sfurTable);
+            db.OnError += new EventHandler<EventArgs>(NotificationWrite);
+            sFurnitureTable = db.SearchInDb(SearchText);
+            db.OnError -= new EventHandler<EventArgs>(NotificationWrite);
+            if (sFurnitureTable != null)
+                DBProductsList = SFurniture.GetModels(sFurnitureTable);
         }
         #endregion
 
@@ -541,9 +538,9 @@ namespace Divanru
         {
             if (SelectedDBProduct == -1) return;
             DisableControls();
-            db.OnError += new EventHandler<ErrEventArgs>(NotificationWrite);
-            db.OpenProductFromDB(sfurTable[SelectedDBProduct].id);
-            db.OnError -= new EventHandler<ErrEventArgs>(NotificationWrite);
+            db.OnError += new EventHandler<EventArgs>(NotificationWrite);
+            db.OpenProductFromDB(sFurnitureTable[SelectedDBProduct].Id, furniture);
+            db.OnError -= new EventHandler<EventArgs>(NotificationWrite);
             WriteLabels();
             EnableControls();
         }
@@ -555,38 +552,38 @@ namespace Divanru
         private void OnDeleteProductFromDB(object p)
         {
             if(SelectedDBProduct == -1) return;
-            db.OnError += new EventHandler<ErrEventArgs>(NotificationWrite);
-            db.DeleteProductFromDB(sfurTable[SelectedDBProduct].id, sfurTable[SelectedDBProduct].model);
+            db.OnError += new EventHandler<EventArgs>(NotificationWrite);
+            db.DeleteProductFromDB(sFurnitureTable[SelectedDBProduct].Id, sFurnitureTable[SelectedDBProduct].Model);
             OnSearchProductsInDBExecuted(p);
-            db.OnError -= new EventHandler<ErrEventArgs>(NotificationWrite);
+            db.OnError -= new EventHandler<EventArgs>(NotificationWrite);
         }
         #endregion
 
         #region write labels
         private void WriteLabels()
         {
-            Cat0 = (Furniture.Categories?.Length > 0 ? Furniture.Categories[0] : "") + (Furniture.Categories?.Length > 1 ? " / " + Furniture.Categories[1] : "") + (Furniture.Categories?.Length > 2 ? " / " + Furniture.Categories[2] : "");
-            Model = Furniture.Model;
-            Price = Furniture.Price ?? "";
-            OldPrice = Furniture.OldPrice ?? "";
-            Description = (Furniture.Description) ?? "";
-            Size = (Furniture.Size?.Length > 0 ? Furniture.Size[0] : "") + (Furniture.Size?.Length > 1 ? " x " + Furniture.Size[1] : "") + (Furniture.Size?.Length > 2 ? " x " + Furniture.Size[2] : "");
-            Ch0 = Furniture.Characteristics?.Length > 0 ? Furniture.Characteristics[0] : "";
-            Ch1 = Furniture.Characteristics?.Length > 1 ? Furniture.Characteristics[1] : "";
-            Ch2 = Furniture.Characteristics?.Length > 2 ? Furniture.Characteristics[2] : "";
-            Ch3 = Furniture.Characteristics?.Length > 3 ? Furniture.Characteristics[3] : "";
-            Ch4 = Furniture.Characteristics?.Length > 4 ? Furniture.Characteristics[4] : "";
-            Ch5 = Furniture.Characteristics?.Length > 5 ? Furniture.Characteristics[5] : "";
-            Ch6 = Furniture.Characteristics?.Length > 6 ? Furniture.Characteristics[6] : "";
-            Ch7 = Furniture.Characteristics?.Length > 7 ? Furniture.Characteristics[7] : "";
-            Ch8 = Furniture.Characteristics?.Length > 8 ? Furniture.Characteristics[8] : "";
-            Ch9 = Furniture.Characteristics?.Length > 9 ? Furniture.Characteristics[9] : "";
-            Ch10 = Furniture.Characteristics?.Length > 10 ? Furniture.Characteristics[10] : "";
-            Ch11 = Furniture.Characteristics?.Length > 11 ? Furniture.Characteristics[11] : "";
-            Ch12 = Furniture.Characteristics?.Length > 12 ? Furniture.Characteristics[12] : "";
-            Ch13 = Furniture.Characteristics?.Length > 13 ? Furniture.Characteristics[13] : "";
-            Link = Furniture.Link ?? "";
-            Image = ToBitmapImage(Furniture.Image);
+            Cat0 = (furniture.Categories?.Length > 0 ? furniture.Categories[0] : "") + (furniture.Categories?.Length > 1 ? " / " + furniture.Categories[1] : "") + (furniture.Categories?.Length > 2 ? " / " + furniture.Categories[2] : "").Trim('/');
+            Model = furniture.Model;
+            Price = furniture.Price ?? "";
+            OldPrice = furniture.OldPrice ?? "";
+            Description = (furniture.Description) ?? "";
+            Size = (furniture.Size?.Length > 0 ? furniture.Size[0] : "") + (furniture.Size?.Length > 1 ? " x " + furniture.Size[1] : "") + (furniture.Size?.Length > 2 ? " x " + furniture.Size[2] : "");
+            Ch0 = furniture.Characteristics?.Length > 0 ? furniture.Characteristics[0] : "";
+            Ch1 = furniture.Characteristics?.Length > 1 ? furniture.Characteristics[1] : "";
+            Ch2 = furniture.Characteristics?.Length > 2 ? furniture.Characteristics[2] : "";
+            Ch3 = furniture.Characteristics?.Length > 3 ? furniture.Characteristics[3] : "";
+            Ch4 = furniture.Characteristics?.Length > 4 ? furniture.Characteristics[4] : "";
+            Ch5 = furniture.Characteristics?.Length > 5 ? furniture.Characteristics[5] : "";
+            Ch6 = furniture.Characteristics?.Length > 6 ? furniture.Characteristics[6] : "";
+            Ch7 = furniture.Characteristics?.Length > 7 ? furniture.Characteristics[7] : "";
+            Ch8 = furniture.Characteristics?.Length > 8 ? furniture.Characteristics[8] : "";
+            Ch9 = furniture.Characteristics?.Length > 9 ? furniture.Characteristics[9] : "";
+            Ch10 = furniture.Characteristics?.Length > 10 ? furniture.Characteristics[10] : "";
+            Ch11 = furniture.Characteristics?.Length > 11 ? furniture.Characteristics[11] : "";
+            Ch12 = furniture.Characteristics?.Length > 12 ? furniture.Characteristics[12] : "";
+            Ch13 = furniture.Characteristics?.Length > 13 ? furniture.Characteristics[13] : "";
+            Link = furniture.Link ?? "";
+            Image = ToBitmapImage(furniture.Image);
         }
         #endregion
 
@@ -597,7 +594,7 @@ namespace Divanru
             {
                 BitmapImage img = new BitmapImage();
                 img.BeginInit();
-                img.CacheOption = BitmapCacheOption.OnLoad;//CacheOption must be set after BeginInit()
+                img.CacheOption = BitmapCacheOption.OnLoad;
                 img.StreamSource = ms;
                 img.EndInit();
                 if (img.CanFreeze)

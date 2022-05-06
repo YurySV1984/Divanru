@@ -13,8 +13,8 @@ namespace Divanru
     internal class Products
     {
         private ObservableCollection<ListElement> _products = new ObservableCollection<ListElement>();
-        const string iFile = "image.jpg";
-        public event EventHandler<ErrEventArgs> OnError;
+        public event EventHandler<EventArgs> OnError;
+
         public ListElement this[int index]
         {
             get { return _products[index]; }
@@ -32,26 +32,21 @@ namespace Divanru
             _products.AddRange(productsint);
         }
 
-        //internal static List<ListElement> OrderBy()
-        //{
-        //    return (List<ListElement>)_products.OrderBy(p => p.title);
-        //}
-
-        internal void OrdBy()
+        internal void OrderByTitle()
         {
-            //return (List<ListElement>)_products.OrderBy(p => p.title);
-            _products = new ObservableCollection<ListElement>(_products.OrderBy(p => p.title).ToList());
+            _products = new ObservableCollection<ListElement>(_products.OrderBy(p => p.Title).ToList());
         }
 
         internal void RemoveAt(int v)
         {
             _products.RemoveAt(v);
         }
+
         public ObservableCollection<string> GetList()
         {
             ObservableCollection<string> list = new ObservableCollection<string>();
-            foreach (var item in _products)
-                list.Add(item.title);            
+            foreach (var product in _products)
+                list.Add(product.Title);            
             return list;
         }
 
@@ -60,7 +55,7 @@ namespace Divanru
         /// </summary>
         /// <param name="url"></param>
         /// <returns></returns>
-        public async Task GetOneProduct(string url)
+        public async Task GetOneProduct(string url, Furniture furniture)
         {
             try
             {
@@ -71,23 +66,22 @@ namespace Divanru
 
                 var divs = htmlDocument.DocumentNode.Descendants("a")
                     .Where(node => node.GetAttributeValue("class", "").Equals("ImmXq q20FV DACcg z4mg0 BreadcrumbLink"))?.ToArray();
-                Furniture.Categories = new string[divs.Length - 1];
+                furniture.Categories = new string[divs.Length - 1];
                 for (int i = 1; i < divs.Length; i++)
-                    Furniture.Categories[i - 1] = divs[i].InnerText;
-                Furniture.Model = null;
-                Furniture.Model = htmlDocument.DocumentNode.DescendantsAndSelf("h1")
+                    furniture.Categories[i - 1] = divs[i].InnerText;
+                furniture.Model = null;
+                furniture.Model = htmlDocument.DocumentNode.DescendantsAndSelf("h1")
                     .Where(node => node.GetAttributeValue("class", "").Equals("wAww4 z4mg0")).FirstOrDefault()?.InnerText;
-                Furniture.Description = (htmlDocument.DocumentNode.Descendants("div")
-                    .Where(node => node.GetAttributeValue("class", "").Equals("OJ95x"))?.FirstOrDefault()?.Descendants("p").FirstOrDefault()?.InnerText)?.Replace("&laquo;", "\"")?.Replace("&raquo;", "\"")?.Replace("&nbsp;", " ")?.Replace("&ndash;", "-");
-                Furniture.Price = null;
-                Furniture.Price = htmlDocument.DocumentNode.DescendantsAndSelf("span")
+                furniture.Description = (htmlDocument.DocumentNode.Descendants("div")
+                    .Where(node => node.GetAttributeValue("class", "").Equals("OJ95x"))?.FirstOrDefault()?.Descendants("p").FirstOrDefault()?.InnerText)?.Replace("&laquo;", "\"")?.Replace("&raquo;", "\"")?.Replace("&nbsp;", " ")?.Replace("&ndash;", "-")?.Replace("&mdash;", "-");
+                furniture.Price = null;
+                furniture.Price = htmlDocument.DocumentNode.DescendantsAndSelf("span")
                     .Where(node => node.GetAttributeValue("class", "").Contains("Zq2dF F9ye5 cqsan KgyFz")).FirstOrDefault()?.InnerText;
-                Furniture.OldPrice = null;
-                Furniture.OldPrice = htmlDocument.DocumentNode.DescendantsAndSelf("span")
+                furniture.OldPrice = null;
+                furniture.OldPrice = htmlDocument.DocumentNode.DescendantsAndSelf("span")
                     .Where(node => node.GetAttributeValue("class", "").Contains("Zq2dF h1mna F9ye5 wfxlK")).FirstOrDefault()?.InnerText;
-                //Furniture.Link = null;
-                Furniture.Link = url;
-                Furniture.Size = null;
+                furniture.Link = url;
+                furniture.Size = null;
                 var size = htmlDocument.DocumentNode.Descendants("div")
                     .Where(node => node.GetAttributeValue("class", "").Equals("Pl7um")).FirstOrDefault()?.Descendants("div")
                     .Where(node => node.GetAttributeValue("class", "").Equals("Pv6jk lgaxY")).ToArray()
@@ -96,39 +90,39 @@ namespace Divanru
 
                 if (size != null)
                 {
-                    Furniture.Size = new string[size.Length];
-                    for (int i = 0; i < Furniture.Size.Length; i++)
-                        Furniture.Size[i] = size[i].InnerText.Replace("Размеры (Ш х Д х В): ", "").Replace("Размеры (Д х Ш): ", "");
+                    furniture.Size = new string[size.Length];
+                    for (int i = 0; i < furniture.Size.Length; i++)
+                        furniture.Size[i] = size[i].InnerText.Replace("Размеры (Ш х Д х В): ", "").Replace("Размеры (Д х Ш): ", "");
                 }
 
                 var characteristics = htmlDocument.DocumentNode.Descendants("div")
                     .Where(node => node.GetAttributeValue("class", "").Equals("O1hUI lgaxY R2259")).ToArray();
-                Furniture.Characteristics = null;
-                Furniture.Characteristics = new string[characteristics.Length];
+                furniture.Characteristics = null;
+                furniture.Characteristics = new string[characteristics.Length];
                 for (int i = 0; i < characteristics.Length; i++)
                 {
                     characteristics[i].Descendants("div").FirstOrDefault()?.Remove();
-                    Furniture.Characteristics[i] = characteristics[i].InnerText;
+                    furniture.Characteristics[i] = characteristics[i].InnerText;
                 }
                 var imageUrlString = htmlDocument.DocumentNode.Descendants()
                                  .Where(n => n.Name == "script").Where(n => n.InnerHtml.Contains("\"product\":{\"id\":")).FirstOrDefault()?.InnerText;
                 var imageUrlStart = imageUrlString.IndexOf("\"product\":{\"id\":") + 11;
                 imageUrlStart = imageUrlString.IndexOf("{\"src\":\"", imageUrlStart) + 8;
                 var imageUrlEnd = imageUrlString.IndexOf("orientation", imageUrlStart) - 3;
-                Furniture.ImageUrl = null;
-                Furniture.ImageUrl = imageUrlString.Substring(imageUrlStart, imageUrlEnd - imageUrlStart).Trim().Replace("\\u002F", "/");
+                furniture.ImageUrl = null;
+                furniture.ImageUrl = imageUrlString.Substring(imageUrlStart, imageUrlEnd - imageUrlStart).Trim().Replace("\\u002F", "/");
 
                 
                 httpclient = new HttpClient();
-                HttpResponseMessage response = await httpclient.GetAsync(Furniture.ImageUrl);
+                HttpResponseMessage response = await httpclient.GetAsync(furniture.ImageUrl);
                 Stream streamToReadFrom = await response.Content.ReadAsStreamAsync();
                 var br = new BinaryReader(streamToReadFrom);
-                Furniture.Image = null;
-                Furniture.Image = br.ReadBytes((int)streamToReadFrom.Length);
+                furniture.Image = null;
+                furniture.Image = br.ReadBytes((int)streamToReadFrom.Length);
             }
             catch (Exception e)
             {
-                OnError?.Invoke(this, new ErrEventArgs(e.Message));
+                OnError?.Invoke(this, new EventArgs(e.Message));
             }
 
         }

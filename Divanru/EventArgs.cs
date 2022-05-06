@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace Divanru
 {
-    public class ErrEventArgs
+    public class EventArgs
     {
-        public ErrEventArgs(string v)
+        public EventArgs(string v)
         {
             ErrorText = v;
         }
