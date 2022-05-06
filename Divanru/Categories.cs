@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Divanru
 {
-    internal class Categories
+    internal class Categories : IEnumerable<ListElement>
     {
         private const string siteurl = "https://www.divan.ru/ekaterinburg/";
         private const string regexstring = @"""name"":""[^{]*""url"":""\\u002Fekaterinburg\\u002Fcategory\\u002F[\w-]*";
@@ -20,6 +21,15 @@ namespace Divanru
 
         private List<ListElement> _categories = new List<ListElement>();      //лист с категориями
 
+        public IEnumerator<ListElement> GetEnumerator()
+        {
+            return ((IEnumerable<ListElement>)_categories).GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return ((IEnumerable)_categories).GetEnumerator();
+        }
         /// <summary>
         /// indexer
         /// </summary>

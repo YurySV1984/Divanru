@@ -9,7 +9,7 @@ namespace Divanru
 {
     class DB
     {
-        MySqlConnection connection = new MySqlConnection("server=localhost;port=3307;username=root;password=root;database=divanparser");
+        private readonly MySqlConnection connection = new MySqlConnection("server=localhost;port=3307;username=root;password=root;database=divanparser");
         public event EventHandler<EventArgs> OnError;
 
 
@@ -126,9 +126,7 @@ namespace Divanru
             var s1 = key.Split(' ');
             var s2 = string.Empty;
             foreach (string s in s1)
-            {
                 s2 = s2 + "%" + s;
-            }
             command.Parameters.Add("@keyword", MySqlDbType.VarChar).Value = "%" + s2 + "%";
             try
             {
@@ -147,7 +145,7 @@ namespace Divanru
             }
 
             var sfurTable = new SFurniture[table.Rows.Count];
-            
+                     
             for (int i = 0; i < table.Rows.Count; i++)
             {
                 sfurTable[i] = new SFurniture

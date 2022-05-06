@@ -395,7 +395,6 @@ namespace Divanru
             ProgressBarMax = 9;
             //ProgressBarMax = categories.Count;
             for (int i = 0; i < 9; i++)                //для демонстрации стоит ограничение только на 9 катогорий
-            //for (int i = 0; i < categories.Count; i++)
             //foreach (var cat in categories)
             {
                 categories.OnError += new EventHandler<EventArgs>(NotificationWrite);
@@ -436,12 +435,12 @@ namespace Divanru
             categories.OnError += new EventHandler<EventArgs>(NotificationWrite);
             products.AddRange(await categories.ParseProductsOneCat(categoryUrl + categories[SelectedCat].Link));
             categories.OnError -= new EventHandler<EventArgs>(NotificationWrite);
-            for (int i = 0; i < products.Count; i++)
+            foreach (var product in products)
             {
-                ProductsListBox.Add(products[i].Title);
+                ProductsListBox.Add(product.Title);
                 ProductsCount = ProductsListBox.Count + " of " + products.Count;
                 products.OnError += new EventHandler<EventArgs>(NotificationWrite);
-                await products.GetOneProduct(productUrl + products[i].Link, furniture);
+                await products.GetOneProduct(productUrl + product.Link, furniture);
                 products.OnError -= new EventHandler<EventArgs>(NotificationWrite);
                 WriteLabels();
                 db.OnError += new EventHandler<EventArgs>(NotificationWrite);
