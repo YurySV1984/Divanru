@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using MySql.Data.MySqlClient;
 
 namespace Divanru
@@ -10,12 +11,15 @@ namespace Divanru
     class DB
     {
         private readonly MySqlConnection connection = new MySqlConnection("server=localhost;port=3307;username=root;password=root;database=divanparser");
+        
         public event EventHandler<EventArgs> OnError;
+        public event EventHandler<CopyCatToDBArgs> OnCopyCategoryToDB;
 
+        private const string productUrl = "https://www.divan.ru/ekaterinburg/product/";
 
         public void OpenConnecton()
         {
-            if (connection.State == System.Data.ConnectionState.Closed)
+            if (connection.State == ConnectionState.Closed)
             {
                 try
                 {
@@ -30,7 +34,7 @@ namespace Divanru
 
         public void CloseConnecton()
         {
-            if (connection.State == System.Data.ConnectionState.Open)
+            if (connection.State == ConnectionState.Open)
                 connection.Close();
         }
 
@@ -103,9 +107,7 @@ namespace Divanru
             try
             {
                 if (command.ExecuteNonQuery() == 1)
-                {
-                    OnError?.Invoke(this, new EventArgs($"{furniture.Model} added to the Database"));
-                }
+                    OnError?.Invoke(this, new EventArgs($"{furniture.Model} has been added to the Database"));
             }
             catch (Exception e)
             {
@@ -198,7 +200,7 @@ namespace Divanru
             {
                 if (command.ExecuteNonQuery() == 1)
                 {
-                    OnError?.Invoke(this, new EventArgs($"{model} deleted from the Database"));
+                    OnError?.Invoke(this, new EventArgs($"{model} has been deleted from the Database"));
                 }
             }
             catch (Exception ee)
@@ -208,8 +210,15 @@ namespace Divanru
             db.CloseConnecton();
         }
 
-        
-    }
-
-    
+        public async Task CopyCategoryToDb (Products products)
+        {
+            Furniture furniture = new Furniture ();
+            for (int i = 0; i < products.Count; i++)
+                {
+                    await products.GetOneProduct(productUrl + products[i].Link, furniture);
+                    CopyProductToDB(furniture);
+                    OnCopyCategoryToDB?.Invoke(this, new CopyCatToDBArgs(products.Count, i + 1, furniture)); 
+                } 
+        }  
+    }  
 }

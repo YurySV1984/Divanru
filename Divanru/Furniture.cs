@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Divanru
 {
-    class SFurniture
+    public class SFurniture
     {
         public string Model { get; set; }
         public uint Id { get; set; }
@@ -23,7 +23,7 @@ namespace Divanru
     
     
     
-    class Furniture : SFurniture
+    public class Furniture : SFurniture
     {
         public string [] Categories { get; set; }
         public string Description { get; set; }
