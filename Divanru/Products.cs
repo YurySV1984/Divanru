@@ -11,9 +11,10 @@ using System.Threading.Tasks;
 
 namespace Divanru
 {
-    internal class Products: IEnumerable<ListElement>
+    public class Products: IEnumerable<ListElement>
     {
         private ObservableCollection<ListElement> _products = new ObservableCollection<ListElement>();
+        
         public event EventHandler<EventArgs> OnError;
 
         public IEnumerator<ListElement> GetEnumerator()
@@ -45,7 +46,7 @@ namespace Divanru
 
         internal void OrderByTitle()
         {
-            _products = new ObservableCollection<ListElement>(_products.OrderBy(p => p.Title).Distinct());
+            _products = new ObservableCollection<ListElement>(_products.OrderBy(p => p.Title));
         }
 
         internal void RemoveAt(int v)

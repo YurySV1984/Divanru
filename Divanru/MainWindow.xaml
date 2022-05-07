@@ -8,7 +8,7 @@
         
         mc:Ignorable="d"
         Title="{Binding Title}"
-        Height="900" Width="1600" Icon="/favicon.ico" WindowStartupLocation="CenterScreen" Cursor="Arrow">
+        Height="900" Width="1600" Icon="/favicon.ico" Cursor="Arrow" WindowStartupLocation="CenterScreen">
     <Window.DataContext>
         <vm:MainWindowViewModel/>
     </Window.DataContext>
@@ -19,19 +19,13 @@
     <DockPanel Margin="1">
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="File">
-                <!--MenuItem Header="Exit" Command="{Binding CloseApplicationCommand}"/-->
-                <!--MenuItem Header="Exit">
-                    <MenuItem.Command>
-                        <cmd:CloseApplicationCommand/>
-                    </MenuItem.Command>
-                </MenuItem-->
                 <MenuItem Header="Exit" Command="{StaticResource CloseApplicationCommand}"/>
             </MenuItem>
             <MenuItem Header="?">
                 <MenuItem Header="About" Command="{StaticResource QuestionCommand}"/>
             </MenuItem>
         </Menu>
-        <StatusBar DockPanel.Dock="Bottom">
+        <StatusBar DockPanel.Dock="Bottom" Background="{Binding StatusColor}">
             <StatusBarItem MinWidth="150" MaxHeight="350">
                 <TextBlock Text="{Binding Status}" FontSize="19"/>
             </StatusBarItem>
@@ -172,7 +166,7 @@
                 <StackPanel Margin="9">
                     <TextBlock Text="{Binding Description}" TextWrapping="Wrap" Margin="0,5,0,5"/>
                     <Label>
-                        <Hyperlink    NavigateUri= "{Binding Link}" Cursor="Hand" Command="{Binding OpenProductSiteCommand}">
+                        <Hyperlink NavigateUri= "{Binding Link}" Cursor="Hand" Command="{Binding OpenProductSiteCommand}">
                             <TextBlock Text="{Binding Link}" />
                         </Hyperlink>
                     </Label>
