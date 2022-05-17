@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 
@@ -20,7 +21,7 @@ namespace Divanru
     {
         private Furniture furniture = new Furniture();
         private Categories categories = new Categories();
-        private Products products = new Products();
+        public Products products = new Products();
         private SFurniture[] sFurnitureTable;
         private DB db = new DB();
 
@@ -43,6 +44,13 @@ namespace Divanru
         { 
             get { return _status; }
             set => Set(ref _status, value);
+        }
+        
+        private SolidColorBrush _statusColor = new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, 244, 243, 241));
+        public SolidColorBrush StatusColor
+        {
+            get { return _statusColor; }
+            set => Set(ref _statusColor, value);
         }
         #endregion
 
@@ -113,12 +121,6 @@ namespace Divanru
             get { return _notifications; }
             set { Set(ref _notifications, value, "Nots"); }
         }
-        //private int _selectedLog;
-        //public int SelectedLog
-        //{
-        //    get { return _selectedLog; }
-        //    set { Set(ref _selectedLog, value); }
-        //}
         private void NotificationWrite(object sender, EventArgs e)
         {
             Notifications.Add(e.ErrorText);            
@@ -318,20 +320,32 @@ namespace Divanru
             get { return _progressBarValue; } 
             set { Set(ref _progressBarValue, value); } 
         }
-        private bool _barEnabled = false;
-        public bool BarEnabled
-        { 
-            get { return _barEnabled; } 
-            set { Set(ref _barEnabled, value);} 
-        }
-        private void SetProgressBar(object sender, CatParsingEventArgs e)
+        private void SetProgressBarAndPruducts(object sender, CatParsingEventArgs e)
         {
             ProgressBarMax = e.MaxVal;
             ProgressBarValue = e.Val;
         }
+        private void SetProgressBarAndPruducts(object sender, AllCategoriesParsingArgs e)
+        {
+            ProgressBarMax = e.MaxVal;
+            ProgressBarValue = e.Val;
+            products = e.products;
+            ProductsListBox = products.GetList();
+            ProductsCount = ProductsListBox.Count.ToString();
+
+        }
+        private void SetProgressBarAndPruducts(object sender, CopyCatToDBArgs e)
+        {
+            ProgressBarMax = e.MaxVal;
+            ProgressBarValue = e.Val;
+            furniture = e.furniture;
+            ProductsListBox = products.GetList();
+            ProductsCount = ProductsListBox.Count.ToString();
+            WriteLabels();
+        }
         #endregion
 
-        public MainWindowViewModel()
+            public MainWindowViewModel()
         {
             CloseApplicationCommand = new LambdaCommand(OnCloseApplicationCommandExecuted, CanCloseApplicationCommandExecute);
             FindCategoriesCommand = new LambdaCommand(OnFindCategoriesCommandExecuted, CanFindCategoriesCommand);
@@ -372,10 +386,10 @@ namespace Divanru
             products.Clear();
             ProgressBarValue = 0;
             categories.OnError += new EventHandler<EventArgs>(NotificationWrite);
-            categories.OnParsing += new EventHandler<CatParsingEventArgs>(SetProgressBar);
+            categories.OnParsing += new EventHandler<CatParsingEventArgs>(SetProgressBarAndPruducts);
             products.AddRange(await categories.ParseProductsOneCat(categoryUrl + categories[SelectedCat].Link));
             categories.OnError -= new EventHandler<EventArgs>(NotificationWrite);
-            categories.OnParsing -= new EventHandler<CatParsingEventArgs>(SetProgressBar);
+            categories.OnParsing -= new EventHandler<CatParsingEventArgs>(SetProgressBarAndPruducts);
             ProductsListBox = products.GetList();
             ProductsCount = ProductsListBox.Count.ToString();
             EnableControls();
@@ -389,36 +403,13 @@ namespace Divanru
         {
             if (categories.Count == 0) return;
             DisableControls();
-            int counter = 0;
-            products.Clear();
-            ProductsListBox.Clear();
-            ProgressBarMax = 9;
-            //ProgressBarMax = categories.Count;
-            for (int i = 0; i < 9; i++)                //для демонстрации стоит ограничение только на 9 катогорий
-            //for (int i = 0; i < categories.Count; i++)
-            //foreach (var cat in categories)
-            {
-                categories.OnError += new EventHandler<EventArgs>(NotificationWrite);
-                products.AddRange(await categories.ParseProductsOneCat(categoryUrl + categories[i].Link));
-                categories.OnError -= new EventHandler<EventArgs>(NotificationWrite);
-                for (; counter < products.Count; counter++)
-                {
-                    ProductsListBox.Add(products[counter].Title);
-                    ProductsCount = ProductsListBox.Count.ToString();
-                }
-                ProgressBarValue = i + 1;
-            }
-            products.OrderByTitle();
-
-            ProductsListBox.Clear();
-            for (int i = 0; i < products.Count - 1; i++)
-            {
-                if (products[i + 1].Title == products[i].Title)
-                    products.RemoveAt(i + 1);
-            }
+            categories.OnError += new EventHandler<EventArgs>(NotificationWrite);
+            categories.OnAllCategoriesParsing += new EventHandler<AllCategoriesParsingArgs>(SetProgressBarAndPruducts);
+            await categories.ParseAllCategories();
+            categories.OnError -= new EventHandler<EventArgs>(NotificationWrite);
+            categories.OnAllCategoriesParsing -= new EventHandler<AllCategoriesParsingArgs>(SetProgressBarAndPruducts);
             ProductsListBox = products.GetList();
             ProductsCount = ProductsListBox.Count.ToString();
-            
             EnableControls();
         }
         #endregion
@@ -429,25 +420,23 @@ namespace Divanru
         private async void OnCopyCatToDbCommandExecuted(object p)
         {
             if (SelectedCat == -1) return;
-            products.Clear();
             ProductsListBox.Clear();
             ProductsCount = "";
             DisableControls();
+
+            products.Clear();
             categories.OnError += new EventHandler<EventArgs>(NotificationWrite);
             products.AddRange(await categories.ParseProductsOneCat(categoryUrl + categories[SelectedCat].Link));
             categories.OnError -= new EventHandler<EventArgs>(NotificationWrite);
-            for (int i = 0; i < products.Count; i++)
-            {
-                ProductsListBox.Add(products[i].Title);
-                ProductsCount = ProductsListBox.Count + " of " + products.Count;
-                products.OnError += new EventHandler<EventArgs>(NotificationWrite);
-                await products.GetOneProduct(productUrl + products[i].Link, furniture);
-                products.OnError -= new EventHandler<EventArgs>(NotificationWrite);
-                WriteLabels();
-                db.OnError += new EventHandler<EventArgs>(NotificationWrite);
-                db.CopyProductToDB(furniture);
-                db.OnError -= new EventHandler<EventArgs>(NotificationWrite);
-            }
+
+            products.OnError += new EventHandler<EventArgs>(NotificationWrite);
+            db.OnError += new EventHandler<EventArgs>(NotificationWrite);
+            db.OnCopyCategoryToDB += new EventHandler<CopyCatToDBArgs>(SetProgressBarAndPruducts);
+            await db.CopyCategoryToDb(products);
+            products.OnError -= new EventHandler<EventArgs>(NotificationWrite);
+            db.OnError -= new EventHandler<EventArgs>(NotificationWrite);
+            db.OnCopyCategoryToDB -= new EventHandler<CopyCatToDBArgs>(SetProgressBarAndPruducts);
+
             EnableControls();
         }
         #endregion
@@ -507,14 +496,13 @@ namespace Divanru
             products.OnError += new EventHandler<EventArgs>(NotificationWrite);
             await products.GetOneProduct(productUrl + products[SelectedProduct].Link, furniture);
             products.OnError -= new EventHandler<EventArgs>(NotificationWrite);
-            WriteLabels();
-            EnableControls();
+            WriteLabels();            
             db.OnError += new EventHandler<EventArgs>(NotificationWrite);
             db.CopyProductToDB(furniture);
             db.OnError -= new EventHandler<EventArgs>(NotificationWrite);
+            EnableControls();
         }
 
-        
         #endregion
 
         #region SearchProductsInDBCommand
@@ -559,7 +547,7 @@ namespace Divanru
         }
         #endregion
 
-        #region write labels
+        #region Write labels
         private void WriteLabels()
         {
             Cat0 = (furniture.Categories?.Length > 0 ? furniture.Categories[0] : "") + (furniture.Categories?.Length > 1 ? " / " + furniture.Categories[1] : "") + (furniture.Categories?.Length > 2 ? " / " + furniture.Categories[2] : "").Trim('/');
@@ -594,7 +582,7 @@ namespace Divanru
             {
                 BitmapImage img = new BitmapImage();
                 img.BeginInit();
-                img.CacheOption = BitmapCacheOption.OnLoad;//CacheOption must be set after BeginInit()
+                img.CacheOption = BitmapCacheOption.OnLoad;
                 img.StreamSource = ms;
                 img.EndInit();
                 if (img.CanFreeze)
@@ -609,12 +597,14 @@ namespace Divanru
             ControlsEnabled = false;
             WinCursor = Cursors.Wait;
             Status = "BUSY";
+            StatusColor = new SolidColorBrush(System.Windows.Media.Color.FromArgb(200, 200, 215, 100));
         }
         private void EnableControls()
         {
             ControlsEnabled = true;
             WinCursor = Cursors.Arrow;
             Status = "Ready";
+            StatusColor= new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, 244, 243, 241));
         }
 
     }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -10,10 +11,21 @@ using System.Threading.Tasks;
 
 namespace Divanru
 {
-    internal class Products
+    public class Products: IEnumerable<ListElement>
     {
         private ObservableCollection<ListElement> _products = new ObservableCollection<ListElement>();
+        
         public event EventHandler<EventArgs> OnError;
+
+        public IEnumerator<ListElement> GetEnumerator()
+        {
+            return ((IEnumerable<ListElement>)_products).GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return ((IEnumerable)_products).GetEnumerator();
+        }
 
         public ListElement this[int index]
         {
@@ -34,7 +46,7 @@ namespace Divanru
 
         internal void OrderByTitle()
         {
-            _products = new ObservableCollection<ListElement>(_products.OrderBy(p => p.Title).ToList());
+            _products = new ObservableCollection<ListElement>(_products.OrderBy(p => p.Title));
         }
 
         internal void RemoveAt(int v)
@@ -126,5 +138,7 @@ namespace Divanru
             }
 
         }
+
+        
     }
 }

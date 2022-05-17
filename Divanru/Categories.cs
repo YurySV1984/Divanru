@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -9,17 +10,28 @@ using System.Threading.Tasks;
 
 namespace Divanru
 {
-    internal class Categories
+    internal class Categories : IEnumerable<ListElement>
     {
         private const string siteurl = "https://www.divan.ru/ekaterinburg/";
+        private const string categoryUrl = "https://www.divan.ru/ekaterinburg/category/";
         private const string regexstring = @"""name"":""[^{]*""url"":""\\u002Fekaterinburg\\u002Fcategory\\u002F[\w-]*";
         private const string catstring = "ekaterinburg\\u002Fcategory\\";
 
         public event EventHandler<EventArgs> OnError;
         public event EventHandler<CatParsingEventArgs> OnParsing;
+        public event EventHandler<AllCategoriesParsingArgs> OnAllCategoriesParsing;
 
         private List<ListElement> _categories = new List<ListElement>();      //лист с категориями
 
+        public IEnumerator<ListElement> GetEnumerator()
+        {
+            return ((IEnumerable<ListElement>)_categories).GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return ((IEnumerable)_categories).GetEnumerator();
+        }
         /// <summary>
         /// indexer
         /// </summary>
@@ -155,6 +167,30 @@ namespace Divanru
                 if (!listElement.Title.Equals("Купить") && !listElement.Title.Equals("") && !products.Contains(listElement))
                     products.Add(listElement);
             }
+        }
+
+        public async Task ParseAllCategories()
+        {
+            Products products = new Products();
+            
+            products.Clear();
+            int ProgressBarMax = 9;
+            int ProgressBarValue = 0;
+            //ProgressBarMax = _categories.Count;
+            for (int i = 0; i < 9; i++)                //для демонстрации стоит ограничение только на 9 катогорий
+            //foreach (var cat in categories)
+            {
+                products.AddRange(await ParseProductsOneCat(categoryUrl + _categories[i].Link));
+                ProgressBarValue = i + 1;
+                OnAllCategoriesParsing?.Invoke(this, new AllCategoriesParsingArgs(ProgressBarMax, ProgressBarValue,products));
+            }
+            products.OrderByTitle();
+            for (int i = 0; i < products.Count - 1; i++)
+            {
+                if (products[i + 1].Title == products[i].Title)
+                    products.RemoveAt(i + 1);
+            }
+            OnAllCategoriesParsing?.Invoke(this, new AllCategoriesParsingArgs(ProgressBarMax, ProgressBarValue, products));
         }
 
         
