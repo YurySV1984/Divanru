@@ -11,11 +11,11 @@ namespace Divanru
 {
     internal class Categories
     {
-        const string siteurl = "https://www.divan.ru/ekaterinburg/";
-        const string regexstring = @"""name"":""[^{]*""url"":""\\u002Fekaterinburg\\u002Fcategory\\u002F[\w-]*";
-        const string catstring = "ekaterinburg\\u002Fcategory\\";
+        private const string siteurl = "https://www.divan.ru/ekaterinburg/";
+        private const string regexstring = @"""name"":""[^{]*""url"":""\\u002Fekaterinburg\\u002Fcategory\\u002F[\w-]*";
+        private const string catstring = "ekaterinburg\\u002Fcategory\\";
 
-        public event EventHandler<ErrEventArgs> OnError;
+        public event EventHandler<EventArgs> OnError;
         public event EventHandler<CatParsingEventArgs> OnParsing;
 
         private List<ListElement> _categories = new List<ListElement>();      //лист с категориями
@@ -28,7 +28,6 @@ namespace Divanru
         public ListElement this [int index]
         { 
             get { return _categories [index]; }
-            //set { _categories[index] = value; }
         }
 
         /// <summary>
@@ -38,7 +37,7 @@ namespace Divanru
         public ObservableCollection<string> GetList()
         {
             ObservableCollection<string> list = new ObservableCollection<string>();
-            _categories.ForEach(c => list.Add(c.title));
+            _categories.ForEach(c => list.Add(c.Title));
             return list;
         }
 
@@ -74,20 +73,20 @@ namespace Divanru
                         var element = new ListElement();
                         startindex = match.Value.IndexOf("\"name\":\"") + 8;
                         endindex = match.Value.IndexOf("\"", startindex);
-                        element.title = match?.Value.Substring(startindex, endindex - startindex);
+                        element.Title = match?.Value.Substring(startindex, endindex - startindex);
                         startindex = match.Value.IndexOf("\"url\":\"") + 45;
                         endindex = match.Value.Length;
-                        element.link = match?.Value.Substring(startindex, endindex - startindex);
+                        element.Link = match?.Value.Substring(startindex, endindex - startindex);
 
-                        if (!element.link.Contains("skidki") && !element.link.Contains("rasprodaz") && !element.link.Contains("extra-sale") && !element.link.Contains("promo-bud") && (_categories.FindIndex(catsEl => catsEl.link == element.link) == -1))
+                        if (!element.Link.Contains("skidki") && !element.Link.Contains("rasprodaz") && !element.Link.Contains("extra-sale") && !element.Link.Contains("promo-bud") && (_categories.FindIndex(catsEl => catsEl.Link == element.Link) == -1))
                             _categories.Add(element);
                     }
-                    _categories = _categories.OrderBy(element => element.title).ToList();
+                    _categories = _categories.OrderBy(element => element.Title).ToList();
                 }
             }
             catch (Exception e)
             {
-                OnError?.Invoke(this, new ErrEventArgs(e.Message));
+                OnError?.Invoke(this, new EventArgs(e.Message));
             }
         }
 
@@ -132,7 +131,7 @@ namespace Divanru
             }
             catch (Exception e)
             {
-                OnError?.Invoke(this, new ErrEventArgs(e.Message));
+                OnError?.Invoke(this, new EventArgs(e.Message));
             }
             return productsList;
 
@@ -145,15 +144,15 @@ namespace Divanru
         /// <param name="htmlDocument"></param>
         private void CheckProduct(ref List<ListElement> products, in HtmlAgilityPack.HtmlDocument htmlDocument)
         {
-            var divs =
+            var hrefs =
                 htmlDocument.DocumentNode.Descendants()
                 .Where(node => (node.GetAttributeValue("href", "").Contains("ekaterinburg/product") && !node.GetAttributeValue("class", "").Equals("ImmXq WSf92"))).ToList();
-            foreach (var div in divs)
+            foreach (var div in hrefs)
             {
                 var listElement = new ListElement();
-                listElement.link = div.GetAttributeValue("href", "").Substring(22);
-                listElement.title = div.InnerText;
-                if (!listElement.title.Equals("Купить") && !listElement.title.Equals("") && !products.Contains(listElement))
+                listElement.Link = div.GetAttributeValue("href", "").Substring(22);
+                listElement.Title = div.InnerText;
+                if (!listElement.Title.Equals("Купить") && !listElement.Title.Equals("") && !products.Contains(listElement))
                     products.Add(listElement);
             }
         }
