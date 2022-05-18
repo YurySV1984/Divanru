@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Data;
 using System.Linq;
 using System.Text;
@@ -10,7 +11,8 @@ namespace Divanru
 {
     class DB
     {
-        private readonly MySqlConnection connection = new MySqlConnection("server=localhost;port=3307;username=root;password=root;database=divanparser");
+        private static readonly string dbConnectionString = ConfigurationManager.ConnectionStrings["DBconnectionString"].ConnectionString;
+        private readonly MySqlConnection connection = new MySqlConnection(dbConnectionString);
         
         public event EventHandler<EventArgs> OnError;
         public event EventHandler<CopyCatToDBArgs> OnCopyCategoryToDB;
@@ -38,7 +40,7 @@ namespace Divanru
                 connection.Close();
         }
 
-        public MySqlConnection getConnection()
+        public MySqlConnection GetConnection()
         {
             return connection;
         }
@@ -53,7 +55,7 @@ namespace Divanru
             var db = new DB();
             var table = new DataTable();
             var adapter = new MySqlDataAdapter();
-            var command = new MySqlCommand($"SELECT * FROM `furniture` WHERE `Model`=@Model", db.getConnection());
+            var command = new MySqlCommand($"SELECT * FROM `furniture` WHERE `Model`=@Model", db.GetConnection());
             command.Parameters.Add("@Model", MySqlDbType.VarChar).Value = furniture.Model;
 
             try
@@ -72,7 +74,7 @@ namespace Divanru
                 return;
             }
 
-            command = new MySqlCommand($"INSERT INTO `furniture` (`Categories0`, `Categories1`, `Categories2`, `Model`, `Description`, `Price`, `OldPrice`, `Link`, `size0`, `size1`, `size2`, `characteristics0`, `characteristics1`, `characteristics2`, `characteristics3`, `characteristics4`, `characteristics5`, `characteristics6`, `characteristics7`, `characteristics8`, `characteristics9`, `characteristics10`, `characteristics11`, `characteristics12`, `characteristics13`, `ImageUrl`, `Image`) VALUES (@Categories0, @Categories1, @Categories2, @Model, @Description, @Price, @OldPrice, @Link, @size0, @size1, @size2, @characteristics0, @characteristics1, @characteristics2, @characteristics3, @characteristics4, @characteristics5, @characteristics6, @characteristics7, @characteristics8, @characteristics9, @characteristics10, @characteristics11, @characteristics12, @characteristics13, @ImageUrl, @Image);", db.getConnection());
+            command = new MySqlCommand($"INSERT INTO `furniture` (`Categories0`, `Categories1`, `Categories2`, `Model`, `Description`, `Price`, `OldPrice`, `Link`, `size0`, `size1`, `size2`, `characteristics0`, `characteristics1`, `characteristics2`, `characteristics3`, `characteristics4`, `characteristics5`, `characteristics6`, `characteristics7`, `characteristics8`, `characteristics9`, `characteristics10`, `characteristics11`, `characteristics12`, `characteristics13`, `ImageUrl`, `Image`) VALUES (@Categories0, @Categories1, @Categories2, @Model, @Description, @Price, @OldPrice, @Link, @size0, @size1, @size2, @characteristics0, @characteristics1, @characteristics2, @characteristics3, @characteristics4, @characteristics5, @characteristics6, @characteristics7, @characteristics8, @characteristics9, @characteristics10, @characteristics11, @characteristics12, @characteristics13, @ImageUrl, @Image);", db.GetConnection());
 
             command.Parameters.Add("@Categories0", MySqlDbType.VarChar).Value = furniture.Categories?.Length > 0 ? furniture.Categories[0] : "";
             command.Parameters.Add("@Categories1", MySqlDbType.VarChar).Value = furniture.Categories?.Length > 1 ? furniture.Categories[1] : "";
@@ -123,7 +125,7 @@ namespace Divanru
             var table = new DataTable();
             var adapter = new MySqlDataAdapter();
 
-            var command = new MySqlCommand($"SELECT `id`, `Model` FROM `furniture` WHERE `Model` LIKE @keyword OR `Categories0` LIKE @keyword OR `Categories1` LIKE @keyword OR `Categories2` LIKE @keyword OR `Description` LIKE @keyword OR `Price` LIKE @keyword", db.getConnection());
+            var command = new MySqlCommand($"SELECT `id`, `Model` FROM `furniture` WHERE `Model` LIKE @keyword OR `Categories0` LIKE @keyword OR `Categories1` LIKE @keyword OR `Categories2` LIKE @keyword OR `Description` LIKE @keyword OR `Price` LIKE @keyword", db.GetConnection());
 
             var s1 = key.Split(' ');
             var s2 = string.Empty;
@@ -165,7 +167,7 @@ namespace Divanru
             var table = new DataTable();
             var adapter = new MySqlDataAdapter();
 
-            var command = new MySqlCommand($"SELECT `Categories0`, `Categories1`, `Categories2`, `Model`, `Description`, `Price`, `OldPrice`, `Link`, `size0`, `size1`, `size2`, `characteristics0`, `characteristics1`, `characteristics2`, `characteristics3`, `characteristics4`, `characteristics5`, `characteristics6`, `characteristics7`, `characteristics8`, `characteristics9`, `characteristics10`, `characteristics11`, `characteristics12`, `characteristics13`, `ImageUrl`, `Image` FROM `furniture` WHERE `id` = @id", db.getConnection());
+            var command = new MySqlCommand($"SELECT `Categories0`, `Categories1`, `Categories2`, `Model`, `Description`, `Price`, `OldPrice`, `Link`, `size0`, `size1`, `size2`, `characteristics0`, `characteristics1`, `characteristics2`, `characteristics3`, `characteristics4`, `characteristics5`, `characteristics6`, `characteristics7`, `characteristics8`, `characteristics9`, `characteristics10`, `characteristics11`, `characteristics12`, `characteristics13`, `ImageUrl`, `Image` FROM `furniture` WHERE `id` = @id", db.GetConnection());
             command.Parameters.Add("@id", MySqlDbType.UInt32).Value = id;
             try
             {
@@ -192,7 +194,7 @@ namespace Divanru
         public void DeleteProductFromDB(uint id, string model)
         {
             var db = new DB();
-            var command = new MySqlCommand($"DELETE FROM `furniture` WHERE `furniture`.`id` = @id", db.getConnection());
+            var command = new MySqlCommand($"DELETE FROM `furniture` WHERE `furniture`.`id` = @id", db.GetConnection());
             command.Parameters.Add("@id", MySqlDbType.UInt32).Value = id;
 
             db.OpenConnecton();
@@ -213,12 +215,12 @@ namespace Divanru
         public async Task CopyCategoryToDb (Products products)
         {
             Furniture furniture = new Furniture ();
-            for (int i = 0; i < products.Count; i++)
-                {
-                    await products.GetOneProduct(productUrl + products[i].Link, furniture);
-                    CopyProductToDB(furniture);
-                    OnCopyCategoryToDB?.Invoke(this, new CopyCatToDBArgs(products.Count, i + 1, furniture)); 
-                } 
+            for (int i = 0; i < products.Count; i++)    
+            {
+                await products.GetOneProduct(productUrl + products[i].Link, furniture);   
+                CopyProductToDB(furniture); 
+                OnCopyCategoryToDB?.Invoke(this, new CopyCatToDBArgs(products.Count, i + 1, furniture)); 
+            } 
         }  
     }  
 }
