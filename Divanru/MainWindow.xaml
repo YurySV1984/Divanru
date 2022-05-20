@@ -72,6 +72,11 @@
                         <TextBlock TextWrapping="Wrap" Text="Copy selected category to the Database" TextAlignment="Center"/>
                     </Button.Content>
                 </Button>
+                <Button Height="60" Margin="5,25,5,0" IsEnabled="{Binding CancelEnabled}" Command="{Binding CancelOperationCommand}">
+                    <Button.Content>
+                        <TextBlock TextWrapping="Wrap" Text="Cancel current operation" TextAlignment="Center"/>
+                    </Button.Content>
+                </Button>
             </StackPanel>
 
             <DockPanel Grid.Column="2" Grid.RowSpan="4">

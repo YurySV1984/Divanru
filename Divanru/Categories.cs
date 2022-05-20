@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Divanru
@@ -109,7 +110,7 @@ namespace Divanru
         /// </summary>
         /// <param name="url"></param>
         /// <returns></returns> 
-        public async Task<List<ListElement>> ParseProductsOneCat(string url)
+        public async Task<List<ListElement>> ParseProductsOneCat(string url, CancellationToken cancellationToken)
         {
             List<ListElement> productsList = new List<ListElement>();
             try
@@ -120,6 +121,12 @@ namespace Divanru
                 htmlDocument.LoadHtml(html);
 
                 CheckProduct(ref productsList, in htmlDocument);
+
+                if (cancellationToken.IsCancellationRequested) 
+                { 
+                    OnError?.Invoke(this, new EventArgs("Parsing selected category has been canceled")); 
+                    return productsList;
+                }
 
                 var lastPage = 1;
                 var lastpageNodes = htmlDocument.DocumentNode.Descendants("a")
@@ -139,6 +146,11 @@ namespace Divanru
                     htmlDocument.LoadHtml(html);
                     CheckProduct(ref productsList, in htmlDocument);
                     OnParsing?.Invoke(this, new CatParsingEventArgs(lastPage, i));
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        OnError?.Invoke(this, new EventArgs("Parsing selected category has been canceled"));
+                        return productsList;
+                    }
                 }               
             }
             catch (Exception e)
@@ -169,28 +181,39 @@ namespace Divanru
             }
         }
 
-        public async Task ParseAllCategories()
+        public async Task ParseAllCategories(CancellationToken cancellationToken)
         {
             Products products = new Products();
             
             products.Clear();
-            int ProgressBarMax = 9;
+            //int ProgressBarMax = 9;
             int ProgressBarValue = 0;
-            //ProgressBarMax = _categories.Count;
-            for (int i = 0; i < 9; i++)                //для демонстрации стоит ограничение только на 9 катогорий
-            //foreach (var cat in categories)
+            int ProgressBarMax = _categories.Count;
+            //for (int i = 0; i < 9; i++)                //для демонстрации стоит ограничение только на 9 катогорий
+            foreach (var cat in _categories)
             {
-                products.AddRange(await ParseProductsOneCat(categoryUrl + _categories[i].Link));
-                ProgressBarValue = i + 1;
+                products.AddRange(await ParseProductsOneCat(categoryUrl + cat.Link, cancellationToken));
+                ProgressBarValue++;
                 OnAllCategoriesParsing?.Invoke(this, new AllCategoriesParsingArgs(ProgressBarMax, ProgressBarValue,products));
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    OrderProducts();
+                    OnError?.Invoke(this, new EventArgs("All categories parsing has been canceled"));
+                    return;
+                }
             }
-            products.OrderByTitle();
-            for (int i = 0; i < products.Count - 1; i++)
+            OrderProducts();
+
+            void OrderProducts()
             {
-                if (products[i + 1].Title == products[i].Title)
-                    products.RemoveAt(i + 1);
+                products.OrderByTitle();
+                for (int j = 0; j < products.Count - 1; j++)
+                {
+                    if (products[j + 1].Title == products[j].Title)
+                        products.RemoveAt(j + 1);
+                }
+                OnAllCategoriesParsing?.Invoke(this, new AllCategoriesParsingArgs(ProgressBarMax, ProgressBarValue, products));
             }
-            OnAllCategoriesParsing?.Invoke(this, new AllCategoriesParsingArgs(ProgressBarMax, ProgressBarValue, products));
         }
 
         

@@ -28,6 +28,8 @@ namespace Divanru
         private const string productUrl = "https://www.divan.ru/ekaterinburg/product/";
         private const string categoryUrl = "https://www.divan.ru/ekaterinburg/category/";
 
+        CancellationTokenSource cancelTokenSource = new CancellationTokenSource();
+        
         #region Title
         private string _title = "Divanru parser";
         /// <summary>Заголовок окна</summary>
@@ -133,6 +135,12 @@ namespace Divanru
         { 
             get { return _controlsEnabled; }
             set { Set(ref _controlsEnabled, value); }
+        }
+        private bool _cancelEnabled = false;
+        public bool CancelEnabled
+        { 
+            get { return _cancelEnabled; }
+            set { Set(ref _cancelEnabled, value); } 
         }
         #endregion
 
@@ -360,6 +368,7 @@ namespace Divanru
             SearchProductsInDBCommand = new LambdaCommand(OnSearchProductsInDBExecuted, CanSearchProductsInDB);
             OpenProductFromDBCommand = new LambdaCommand(OnOpenProductFromDBExecuted, CanOpenProductFromDB);
             DeleteProductFromDBCommand = new LambdaCommand(OnDeleteProductFromDB,CanDeleteProductFromDB);
+            CancelOperationCommand = new LambdaCommand(OnCancelOperationExecuted, CanCancelOperation);    
         }
 
         #region FindCategoriesCommand
@@ -383,16 +392,21 @@ namespace Divanru
         {
             if (SelectedCat == -1) return;
             DisableControls();
+            CancelEnabled = true;
             products.Clear();
             ProgressBarValue = 0;
             categories.OnError += new EventHandler<EventArgs>(NotificationWrite);
             categories.OnParsing += new EventHandler<CatParsingEventArgs>(SetProgressBarAndPruducts);
-            products.AddRange(await categories.ParseProductsOneCat(categoryUrl + categories[SelectedCat].Link));
+            CancellationToken cancellationToken = cancelTokenSource.Token;
+            products.AddRange(await categories.ParseProductsOneCat(categoryUrl + categories[SelectedCat].Link, cancellationToken));
+            cancelTokenSource.Dispose();
+            cancelTokenSource = new CancellationTokenSource();
             categories.OnError -= new EventHandler<EventArgs>(NotificationWrite);
             categories.OnParsing -= new EventHandler<CatParsingEventArgs>(SetProgressBarAndPruducts);
             ProductsListBox = products.GetList();
             ProductsCount = ProductsListBox.Count.ToString();
             EnableControls();
+            CancelEnabled = false;
         }
         #endregion
 
@@ -403,14 +417,19 @@ namespace Divanru
         {
             if (categories.Count == 0) return;
             DisableControls();
+            CancelEnabled = true;
             categories.OnError += new EventHandler<EventArgs>(NotificationWrite);
             categories.OnAllCategoriesParsing += new EventHandler<AllCategoriesParsingArgs>(SetProgressBarAndPruducts);
-            await categories.ParseAllCategories();
+            CancellationToken cancellationToken = cancelTokenSource.Token;
+            await categories.ParseAllCategories(cancellationToken);
+            cancelTokenSource.Dispose();
+            cancelTokenSource = new CancellationTokenSource();
             categories.OnError -= new EventHandler<EventArgs>(NotificationWrite);
             categories.OnAllCategoriesParsing -= new EventHandler<AllCategoriesParsingArgs>(SetProgressBarAndPruducts);
             ProductsListBox = products.GetList();
             ProductsCount = ProductsListBox.Count.ToString();
             EnableControls();
+            CancelEnabled = false;
         }
         #endregion
 
@@ -423,21 +442,43 @@ namespace Divanru
             ProductsListBox.Clear();
             ProductsCount = "";
             DisableControls();
+            CancelEnabled = true;
 
+            ProgressBarValue = 0;
             products.Clear();
             categories.OnError += new EventHandler<EventArgs>(NotificationWrite);
-            products.AddRange(await categories.ParseProductsOneCat(categoryUrl + categories[SelectedCat].Link));
+            categories.OnParsing += new EventHandler<CatParsingEventArgs>(SetProgressBarAndPruducts);
+            CancellationToken cancellationToken = cancelTokenSource.Token;
+            products.AddRange(await categories.ParseProductsOneCat(categoryUrl + categories[SelectedCat].Link, cancellationToken));
             categories.OnError -= new EventHandler<EventArgs>(NotificationWrite);
-
+            categories.OnParsing -= new EventHandler<CatParsingEventArgs>(SetProgressBarAndPruducts);
             products.OnError += new EventHandler<EventArgs>(NotificationWrite);
-            db.OnError += new EventHandler<EventArgs>(NotificationWrite);
-            db.OnCopyCategoryToDB += new EventHandler<CopyCatToDBArgs>(SetProgressBarAndPruducts);
-            await db.CopyCategoryToDb(products);
+            
+            if (!cancellationToken.IsCancellationRequested)
+            {
+                db.OnError += new EventHandler<EventArgs>(NotificationWrite);
+                db.OnCopyCategoryToDB += new EventHandler<CopyCatToDBArgs>(SetProgressBarAndPruducts);
+                await db.CopyCategoryToDb(products, cancellationToken);
+                db.OnError -= new EventHandler<EventArgs>(NotificationWrite);
+                db.OnCopyCategoryToDB -= new EventHandler<CopyCatToDBArgs>(SetProgressBarAndPruducts);
+            }
+            
             products.OnError -= new EventHandler<EventArgs>(NotificationWrite);
-            db.OnError -= new EventHandler<EventArgs>(NotificationWrite);
-            db.OnCopyCategoryToDB -= new EventHandler<CopyCatToDBArgs>(SetProgressBarAndPruducts);
+            
+            cancelTokenSource.Dispose();
+            cancelTokenSource = new CancellationTokenSource();
 
+            CancelEnabled = false;
             EnableControls();
+        }
+        #endregion
+
+        #region Cancel Operation
+        public ICommand CancelOperationCommand { get; }
+        private bool CanCancelOperation(object p) => true;
+        private void OnCancelOperationExecuted(object p)
+        {
+            cancelTokenSource.Cancel();
         }
         #endregion
 

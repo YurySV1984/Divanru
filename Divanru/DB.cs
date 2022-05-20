@@ -4,6 +4,7 @@ using System.Configuration;
 using System.Data;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using MySql.Data.MySqlClient;
 
@@ -212,14 +213,19 @@ namespace Divanru
             db.CloseConnecton();
         }
 
-        public async Task CopyCategoryToDb (Products products)
+        public async Task CopyCategoryToDb (Products products, CancellationToken cancellationToken)
         {
             Furniture furniture = new Furniture ();
             for (int i = 0; i < products.Count; i++)    
             {
                 await products.GetOneProduct(productUrl + products[i].Link, furniture);   
                 CopyProductToDB(furniture); 
-                OnCopyCategoryToDB?.Invoke(this, new CopyCatToDBArgs(products.Count, i + 1, furniture)); 
+                OnCopyCategoryToDB?.Invoke(this, new CopyCatToDBArgs(products.Count, i + 1, furniture));
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    OnError?.Invoke(this, new EventArgs("Copying category to the Database has been canceled"));
+                    return;
+                }
             } 
         }  
     }  
