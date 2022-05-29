@@ -346,7 +346,7 @@ namespace Divanru
         {
             ProgressBarMax = e.MaxVal;
             ProgressBarValue = e.Val;
-            furniture = e.furniture;
+            furniture = e.Furniture;
             ProductsListBox = products.GetList();
             ProductsCount = ProductsListBox.Count.ToString();
             WriteLabels();

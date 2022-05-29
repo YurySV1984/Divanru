@@ -22,8 +22,8 @@ namespace Divanru
             this.MaxVal = MaxVal;
             this.Val = Val;
         }
-        public int MaxVal;
-        public int Val;
+        public int MaxVal { get; }
+        public int Val { get; }
     }
 
     public class AllCategoriesParsingArgs
@@ -34,9 +34,9 @@ namespace Divanru
             this.Val=Val;
             this.products = products;           
         }
-        public int MaxVal;
-        public int Val;
-        public Products products;
+        public int MaxVal { get; }
+        public int Val { get; }
+        public Products products { get; }
     }
 
     public class CopyCatToDBArgs
@@ -45,11 +45,11 @@ namespace Divanru
         {
             this.MaxVal = MaxVal;
             this.Val = Val;
-            this.furniture = furniture;
+            this.Furniture = furniture;
         }
-        public int MaxVal;
-        public int Val;
-        public Furniture furniture;
+        public int MaxVal { get; }
+        public int Val { get; }
+        public Furniture Furniture { get; }
 
     }
 }

@@ -18,7 +18,7 @@ namespace Divanru
         public event EventHandler<EventArgs> OnError;
         public event EventHandler<CopyCatToDBArgs> OnCopyCategoryToDB;
 
-        private const string productUrl = "https://www.divan.ru/ekaterinburg/product/";
+        private const string productUrl = "https://www.divan.ru/ekaterinburg/product/"; // Это НЕ адрес, это дополнение до строки адреса продукта.
 
         public void OpenConnecton()
         {
