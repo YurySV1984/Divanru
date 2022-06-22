@@ -6,16 +6,21 @@ using System.Threading.Tasks;
 
 namespace Divanru
 {
+    interface IProgressBarEventArgs
+    {
+        int MaxVal { get; }
+        int Val { get; }
+    }
     public class EventArgs
     {
-        public EventArgs(string ErrorText)
+        public EventArgs(string Text)
         {
-            this.ErrorText = ErrorText;
+            this.Text = Text;
         }
-        public string ErrorText { get; }
+        public string Text { get; }
     }
 
-    public class CatParsingEventArgs
+    public class CatParsingEventArgs : IProgressBarEventArgs
     {
         public CatParsingEventArgs(int MaxVal, int Val)
         {
@@ -26,20 +31,20 @@ namespace Divanru
         public int Val { get; }
     }
 
-    public class AllCategoriesParsingArgs
+    public class AllCategoriesParsingArgs : IProgressBarEventArgs
     {
         public AllCategoriesParsingArgs(int MaxVal, int Val, Products products)
         {
             this.MaxVal=MaxVal;
             this.Val=Val;
-            this.products = products;           
+            this.Products = products;           
         }
         public int MaxVal { get; }
         public int Val { get; }
-        public Products products { get; }
+        public Products Products { get; }
     }
 
-    public class CopyCatToDBArgs
+    public class CopyCatToDBArgs : IProgressBarEventArgs
     {
         public CopyCatToDBArgs(int MaxVal, int Val, Furniture furniture)
         {

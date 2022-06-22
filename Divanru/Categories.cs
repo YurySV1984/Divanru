@@ -11,6 +11,9 @@ using System.Threading.Tasks;
 
 namespace Divanru
 {
+    /// <summary>
+    /// Категории мебели
+    /// </summary>
     internal class Categories : IEnumerable<ListElement>
     {
         private const string siteurl = "https://www.divan.ru/ekaterinburg/";
@@ -34,7 +37,7 @@ namespace Divanru
             return ((IEnumerable)_categories).GetEnumerator();
         }
         /// <summary>
-        /// indexer
+        /// Индексатор.
         /// </summary>
         /// <param name="index"></param>
         /// <returns></returns>
@@ -44,7 +47,7 @@ namespace Divanru
         }
 
         /// <summary>
-        /// возвращает коллекцию из названия для листбокса
+        /// Возвращает коллекцию из названий категорий для отображения в листбоксе
         /// </summary>
         /// <returns></returns>
         public ObservableCollection<string> GetList()
@@ -54,6 +57,9 @@ namespace Divanru
             return list;
         }
 
+        /// <summary>
+        /// Количество категорий в коллекции
+        /// </summary>
         public int Count { get { return _categories.Count; } }
 
         /// <summary>
@@ -106,9 +112,9 @@ namespace Divanru
 
 
         /// <summary>
-        /// Парсить одну категорию товаров по адресу url
+        /// Парсит одну категорию товаров по адресу url и возвращает коллекцию мебели.
         /// </summary>
-        /// <param name="url"></param>
+        /// <param name="url">URL-адрес категории.</param>
         /// <returns></returns> 
         public async Task<List<ListElement>> ParseProductsOneCat(string url, CancellationToken cancellationToken)
         {
@@ -162,7 +168,7 @@ namespace Divanru
         }
 
         /// <summary>
-        /// Проверяет корректность ссылки на продукт в меню категории
+        /// Проверяет корректность ссылки на продукт в меню категории.
         /// </summary>
         /// <param name="products"></param>
         /// <param name="htmlDocument"></param>
@@ -181,15 +187,18 @@ namespace Divanru
             }
         }
 
+        /// <summary>
+        /// Парсит все категории мебели
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task ParseAllCategories(CancellationToken cancellationToken)
         {
             Products products = new Products();
             
             products.Clear();
-            //int ProgressBarMax = 9;
             int ProgressBarValue = 0;
             int ProgressBarMax = _categories.Count;
-            //for (int i = 0; i < 9; i++)                //для демонстрации стоит ограничение только на 9 катогорий
             foreach (var cat in _categories)
             {
                 products.AddRange(await ParseProductsOneCat(categoryUrl + cat.Link, cancellationToken));

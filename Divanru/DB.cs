@@ -12,14 +12,25 @@ namespace Divanru
 {
     class DB
     {
+        /// <summary>
+        /// Строка соединения с БД считывается из App.config
+        /// </summary>
         private static readonly string dbConnectionString = ConfigurationManager.ConnectionStrings["DBconnectionString"].ConnectionString;
         private readonly MySqlConnection connection = new MySqlConnection(dbConnectionString);
-        
+        /// <summary>
+        /// Событие ошибки.
+        /// </summary>
         public event EventHandler<EventArgs> OnError;
+        /// <summary>
+        /// Событие при копировании категории в БД.
+        /// </summary>
         public event EventHandler<CopyCatToDBArgs> OnCopyCategoryToDB;
 
         private const string productUrl = "https://www.divan.ru/ekaterinburg/product/"; // Это НЕ адрес, это дополнение до строки адреса продукта.
 
+        /// <summary>
+        /// Открывает соединение с БД.
+        /// </summary>
         public void OpenConnecton()
         {
             if (connection.State == ConnectionState.Closed)
@@ -35,20 +46,27 @@ namespace Divanru
             }
         }
 
+        /// <summary>
+        /// Закрывает соединение с БД.
+        /// </summary>
         public void CloseConnecton()
         {
             if (connection.State == ConnectionState.Open)
                 connection.Close();
         }
 
+        /// <summary>
+        /// Возвращает соединение с БД.
+        /// </summary>
+        /// <returns>Соединение с БД.</returns>
         public MySqlConnection GetConnection()
         {
             return connection;
         }
 
         /// <summary>
-        /// копирует продует в БД
-        /// </summary>, проверяя перед этим его наличие там
+        /// Копирует продукт в БД, проверяя перед этим его наличие там.
+        /// </summary>
         public void CopyProductToDB(Furniture furniture)
         {
             if (furniture.Model == null) return;
@@ -71,7 +89,7 @@ namespace Divanru
 
             if (table.Rows.Count > 0)
             {        
-                OnError?.Invoke(this, new EventArgs($"{furniture.Model} is aleady in the Database"));
+                OnError?.Invoke(this, new EventArgs($"{furniture.Model} aleady exists in the Database"));
                 return;
             }
 
@@ -120,6 +138,11 @@ namespace Divanru
             db.CloseConnecton();
         }
 
+        /// <summary>
+        /// Возвращает массив SFurniture из БД как результат поиска по ключевому слову key (поиск по цене, категории, описанию, названию).
+        /// </summary>
+        /// <param name="key">Ключевое слово для поиска. </param>
+        /// <returns>Массив SFurniture</returns>
         public SFurniture[] SearchInDb(string key)
         {
             var db = new DB();
@@ -162,7 +185,12 @@ namespace Divanru
             return sfurTable;
         }
 
-        public void OpenProductFromDB(uint id, Furniture furniture)
+        /// <summary>
+        /// Возвращает мебель из базы по id.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="furniture"></param>
+        public Furniture OpenProductFromDB(uint id)
         {
             var db = new DB();
             var table = new DataTable();
@@ -179,7 +207,7 @@ namespace Divanru
             {
                 OnError?.Invoke(this, new EventArgs(ee.Message));
             }
-
+            var furniture = new Furniture();
             furniture.Categories = new string[3] { (string)table.Rows[0].ItemArray[0], (string)table.Rows[0].ItemArray[1], (string)table.Rows[0].ItemArray[2] };
             furniture.Model = (string)table.Rows[0].ItemArray[3];
             furniture.Description = (string)table.Rows[0].ItemArray[4];
@@ -190,8 +218,14 @@ namespace Divanru
             furniture.Characteristics = new string[14] { (string)table.Rows[0].ItemArray[11], (string)table.Rows[0].ItemArray[12], (string)table.Rows[0].ItemArray[13], (string)table.Rows[0].ItemArray[14], (string)table.Rows[0].ItemArray[15], (string)table.Rows[0].ItemArray[16], (string)table.Rows[0].ItemArray[17], (string)table.Rows[0].ItemArray[18], (string)table.Rows[0].ItemArray[19], (string)table.Rows[0].ItemArray[20], (string)table.Rows[0].ItemArray[21], (string)table.Rows[0].ItemArray[22], (string)table.Rows[0].ItemArray[23], (string)table.Rows[0].ItemArray[24] };
             furniture.ImageUrl = (string)table.Rows[0].ItemArray[25];
             furniture.Image = (byte[])table.Rows[0].ItemArray[26];
+            return furniture;
         }
 
+        /// <summary>
+        /// Удаляет мебель из базы по id.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="model"></param>
         public void DeleteProductFromDB(uint id, string model)
         {
             var db = new DB();
@@ -213,9 +247,15 @@ namespace Divanru
             db.CloseConnecton();
         }
 
+        /// <summary>
+        /// Копирует категорию мебели в БД.
+        /// </summary>
+        /// <param name="products"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task CopyCategoryToDb (Products products, CancellationToken cancellationToken)
         {
-            Furniture furniture = new Furniture ();
+            Furniture furniture = new Furniture();
             for (int i = 0; i < products.Count; i++)    
             {
                 await products.GetOneProduct(productUrl + products[i].Link, furniture);   
