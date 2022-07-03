@@ -53,7 +53,13 @@ namespace Divanru
         /// Добавляет к коллекции мебели другую коллекцию мебели.
         /// </summary>
         /// <param name="products"></param>
-        internal void AddRange(List<ListElement> products) => _products.AddRange(products);
+        internal void AddRange(List<ListElement> products) 
+        { 
+            foreach (var product in products)
+            {
+                _products.Add(product);
+            }
+        }
         /// <summary>
         /// Сортирует коллекцию мебели по названию.
         /// </summary>

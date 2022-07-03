@@ -33,10 +33,10 @@ namespace Divanru
 
     public class AllCategoriesParsingArgs : IProgressBarEventArgs
     {
-        public AllCategoriesParsingArgs(int MaxVal, int Val, Products products)
+        public AllCategoriesParsingArgs(int maxVal, int val, Products products)
         {
-            this.MaxVal=MaxVal;
-            this.Val=Val;
+            this.MaxVal=maxVal;
+            this.Val=val;
             this.Products = products;           
         }
         public int MaxVal { get; }
