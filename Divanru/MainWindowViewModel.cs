@@ -184,7 +184,7 @@ namespace Divanru
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void NotificationWrite(object sender, EventArgs e)
+        private void NotificationWrite(object sender, NotificationEventArgs e)
         {
             Notifications.Add(e.Text);
         }
@@ -532,10 +532,10 @@ namespace Divanru
         private async void OnFindCategoriesCommandExecuted(object p)
         {
             DisableControls();
-            _categories.OnError += new EventHandler<EventArgs>(NotificationWrite);
-            await _categories.FindCategories();
-            _categories.OnError -= new EventHandler<EventArgs>(NotificationWrite);
-            CategoriesListBox = _categories.GetList();
+            _categories.OnError += new EventHandler<NotificationEventArgs>(NotificationWrite);
+            await _categories.FindCategoriesAsync();
+            _categories.OnError -= new EventHandler<NotificationEventArgs>(NotificationWrite);
+            CategoriesListBox = _categories.GetTitleList();
             EnableControls();
         }
         #endregion
@@ -553,13 +553,13 @@ namespace Divanru
             CancelEnabled = true;
             _products.Clear();
             ProgressBarValue = 0;
-            _categories.OnError += new EventHandler<EventArgs>(NotificationWrite);
+            _categories.OnError += new EventHandler<NotificationEventArgs>(NotificationWrite);
             _categories.OnParsing += new EventHandler<CatParsingEventArgs>(SetProgressBar);
             CancellationToken cancellationToken = cancelTokenSource.Token;
-            _products.AddRange(await _categories.ParseProductsOneCat(categoryUrl + _categories[SelectedCat].Link, cancellationToken));
+            _products.AddRange(await _categories.ParseProductsOneCatAsync(categoryUrl + _categories[SelectedCat].Link, cancellationToken));
             cancelTokenSource.Dispose();
             cancelTokenSource = new CancellationTokenSource();
-            _categories.OnError -= new EventHandler<EventArgs>(NotificationWrite);
+            _categories.OnError -= new EventHandler<NotificationEventArgs>(NotificationWrite);
             _categories.OnParsing -= new EventHandler<CatParsingEventArgs>(SetProgressBar);
             ProductsListBox = _products.GetList();
             ProductsCount = ProductsListBox.Count.ToString();
@@ -579,14 +579,14 @@ namespace Divanru
             if (_categories.Count == 0) return;
             DisableControls();
             CancelEnabled = true;
-            _categories.OnError += new EventHandler<EventArgs>(NotificationWrite);
+            _categories.OnError += new EventHandler<NotificationEventArgs>(NotificationWrite);
             _categories.OnAllCategoriesParsing += new EventHandler<AllCategoriesParsingArgs>(SetProgressBar);
             _categories.OnAllCategoriesParsing += new EventHandler<AllCategoriesParsingArgs>(SetProducts);
             CancellationToken cancellationToken = cancelTokenSource.Token;
             await _categories.ParseAllCategories(cancellationToken);
             cancelTokenSource.Dispose();
             cancelTokenSource = new CancellationTokenSource();
-            _categories.OnError -= new EventHandler<EventArgs>(NotificationWrite);
+            _categories.OnError -= new EventHandler<NotificationEventArgs>(NotificationWrite);
             _categories.OnAllCategoriesParsing -= new EventHandler<AllCategoriesParsingArgs>(SetProgressBar);
             _categories.OnAllCategoriesParsing -= new EventHandler<AllCategoriesParsingArgs>(SetProducts);
             ProductsListBox = _products.GetList();
@@ -612,26 +612,26 @@ namespace Divanru
 
             ProgressBarValue = 0;
             _products.Clear();
-            _categories.OnError += new EventHandler<EventArgs>(NotificationWrite);
+            _categories.OnError += new EventHandler<NotificationEventArgs>(NotificationWrite);
             _categories.OnParsing += new EventHandler<CatParsingEventArgs>(SetProgressBar);
             CancellationToken cancellationToken = cancelTokenSource.Token;
-            _products.AddRange(await _categories.ParseProductsOneCat(categoryUrl + _categories[SelectedCat].Link, cancellationToken));
-            _categories.OnError -= new EventHandler<EventArgs>(NotificationWrite);
+            _products.AddRange(await _categories.ParseProductsOneCatAsync(categoryUrl + _categories[SelectedCat].Link, cancellationToken));
+            _categories.OnError -= new EventHandler<NotificationEventArgs>(NotificationWrite);
             _categories.OnParsing -= new EventHandler<CatParsingEventArgs>(SetProgressBar);
-            _products.OnError += new EventHandler<EventArgs>(NotificationWrite);
+            _products.OnError += new EventHandler<NotificationEventArgs>(NotificationWrite);
 
             if (!cancellationToken.IsCancellationRequested)
             {
-                db.OnError += new EventHandler<EventArgs>(NotificationWrite);
+                db.OnEvent += new EventHandler<NotificationEventArgs>(NotificationWrite);
                 db.OnCopyCategoryToDB += new EventHandler<CopyCatToDBArgs>(SetProgressBar);
                 db.OnCopyCategoryToDB += new EventHandler<CopyCatToDBArgs>(SetProducts);
-                await db.CopyCategoryToDb(_products, cancellationToken);
-                db.OnError -= new EventHandler<EventArgs>(NotificationWrite);
+                await db.CopyCategoryToDbAsync(_products, cancellationToken);
+                db.OnEvent -= new EventHandler<NotificationEventArgs>(NotificationWrite);
                 db.OnCopyCategoryToDB -= new EventHandler<CopyCatToDBArgs>(SetProgressBar);
                 db.OnCopyCategoryToDB -= new EventHandler<CopyCatToDBArgs>(SetProducts);
             }
 
-            _products.OnError -= new EventHandler<EventArgs>(NotificationWrite);
+            _products.OnError -= new EventHandler<NotificationEventArgs>(NotificationWrite);
 
             cancelTokenSource.Dispose();
             cancelTokenSource = new CancellationTokenSource();
@@ -702,9 +702,9 @@ namespace Divanru
         {
             if (SelectedProduct == -1) return;
             DisableControls();
-            _products.OnError += new EventHandler<EventArgs>(NotificationWrite);
+            _products.OnError += new EventHandler<NotificationEventArgs>(NotificationWrite);
             await _products.GetOneProduct(productUrl + _products[SelectedProduct].Link, _furniture);
-            _products.OnError -= new EventHandler<EventArgs>(NotificationWrite);
+            _products.OnError -= new EventHandler<NotificationEventArgs>(NotificationWrite);
             WriteLabels();
             EnableControls();
         }
@@ -720,13 +720,13 @@ namespace Divanru
         {
             if (SelectedProduct == -1) return;
             DisableControls();
-            _products.OnError += new EventHandler<EventArgs>(NotificationWrite);
+            _products.OnError += new EventHandler<NotificationEventArgs>(NotificationWrite);
             await _products.GetOneProduct(productUrl + _products[SelectedProduct].Link, _furniture);
-            _products.OnError -= new EventHandler<EventArgs>(NotificationWrite);
+            _products.OnError -= new EventHandler<NotificationEventArgs>(NotificationWrite);
             WriteLabels();
-            db.OnError += new EventHandler<EventArgs>(NotificationWrite);
+            db.OnEvent += new EventHandler<NotificationEventArgs>(NotificationWrite);
             db.CopyProductToDB(_furniture);
-            db.OnError -= new EventHandler<EventArgs>(NotificationWrite);
+            db.OnEvent -= new EventHandler<NotificationEventArgs>(NotificationWrite);
             EnableControls();
         }
 
@@ -741,9 +741,9 @@ namespace Divanru
         private void OnSearchProductsInDBExecuted(object p)
         {
             DBProductsList.Clear();
-            db.OnError += new EventHandler<EventArgs>(NotificationWrite);
+            db.OnEvent += new EventHandler<NotificationEventArgs>(NotificationWrite);
             sFurnitureTable = db.SearchInDb(SearchText);
-            db.OnError -= new EventHandler<EventArgs>(NotificationWrite);
+            db.OnEvent -= new EventHandler<NotificationEventArgs>(NotificationWrite);
             if (sFurnitureTable != null)
                 DBProductsList = SFurniture.GetModels(sFurnitureTable);
         }
@@ -759,9 +759,9 @@ namespace Divanru
         {
             if (SelectedDBProduct == -1) return;
             DisableControls();
-            db.OnError += new EventHandler<EventArgs>(NotificationWrite);
+            db.OnEvent += new EventHandler<NotificationEventArgs>(NotificationWrite);
             _furniture = db.OpenProductFromDB(sFurnitureTable[SelectedDBProduct].Id);
-            db.OnError -= new EventHandler<EventArgs>(NotificationWrite);
+            db.OnEvent -= new EventHandler<NotificationEventArgs>(NotificationWrite);
             WriteLabels();
             EnableControls();
         }
@@ -776,10 +776,10 @@ namespace Divanru
         private void OnDeleteProductFromDB(object p)
         {
             if (SelectedDBProduct == -1) return;
-            db.OnError += new EventHandler<EventArgs>(NotificationWrite);
+            db.OnEvent += new EventHandler<NotificationEventArgs>(NotificationWrite);
             db.DeleteProductFromDB(sFurnitureTable[SelectedDBProduct].Id, sFurnitureTable[SelectedDBProduct].Model);
             OnSearchProductsInDBExecuted(p);
-            db.OnError -= new EventHandler<EventArgs>(NotificationWrite);
+            db.OnEvent -= new EventHandler<NotificationEventArgs>(NotificationWrite);
         }
         #endregion
 

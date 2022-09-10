@@ -16,6 +16,7 @@ namespace Divanru
         /// Название мебели.
         /// </summary>
         public string Model { get; set; }
+
         /// <summary>
         /// Первичный ключ в БД
         /// </summary>
@@ -46,34 +47,42 @@ namespace Divanru
         /// Категория мебели.
         /// </summary>
         public string [] Categories { get; set; }
+
         /// <summary>
         /// Описание мебели.
         /// </summary>
         public string Description { get; set; }
+
         /// <summary>
         /// Цена мебели.
         /// </summary>
         public string Price { get; set; }
+
         /// <summary>
         /// Старая цена мебели.
         /// </summary>
         public string OldPrice { get; set; }
+
         /// <summary>
         /// Ссылка текущей мебели на сайт.
         /// </summary>
         public string Link { get; set; }
+
         /// <summary>
         /// Ссылка на изображение мебели на сайте.
         /// </summary>
         public string ImageUrl { get; set; }
+
         /// <summary>
         /// Размеры мебели, до трех размеров.
         /// </summary>
         public string[] Size { get; set; }
+
         /// <summary>
         /// Характеристики мебели, до 14 характеристик.
         /// </summary>
         public string[] Characteristics { get; set; }
+
         /// <summary>
         /// Изображение мебели.
         /// </summary>

@@ -17,20 +17,16 @@ namespace Divanru
     public class Products: IEnumerable<ListElement>
     {
         private ObservableCollection<ListElement> _products = new ObservableCollection<ListElement>();
+
         /// <summary>
         /// Событие при ошибке.
         /// </summary>        
-        public event EventHandler<EventArgs> OnError;
+        public event EventHandler<NotificationEventArgs> OnError;
 
-        public IEnumerator<ListElement> GetEnumerator()
-        {
-            return ((IEnumerable<ListElement>)_products).GetEnumerator();
-        }
+        public IEnumerator<ListElement> GetEnumerator() => ((IEnumerable<ListElement>)_products).GetEnumerator();
 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return ((IEnumerable)_products).GetEnumerator();
-        }
+        IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)_products).GetEnumerator();
+
         /// <summary>
         /// Идексатор.
         /// </summary>
@@ -45,10 +41,12 @@ namespace Divanru
         /// Счетчик мебели в коллекции.
         /// </summary>
         public int Count { get { return _products.Count; } }
+
         /// <summary>
         /// Очищает коллекцию мебели.
         /// </summary>
         internal void Clear() => _products.Clear();
+
         /// <summary>
         /// Добавляет к коллекции мебели другую коллекцию мебели.
         /// </summary>
@@ -64,11 +62,13 @@ namespace Divanru
         /// Сортирует коллекцию мебели по названию.
         /// </summary>
         internal void OrderByTitle() => _products = new ObservableCollection<ListElement>(_products.OrderBy(p => p.Title));
+
         /// <summary>
         /// Удаляет элемент с заданным индексом из коллекции. 
         /// </summary>
         /// <param name="v">Индекс для удаления</param>
         internal void RemoveAt(int v) => _products.RemoveAt(v);
+
         /// <summary>
         /// Возвращает коллекцию из названий мебели для отображения в листбоксе.
         /// </summary>
@@ -184,19 +184,17 @@ namespace Divanru
                 var imageUrlStart = imageUrlString.IndexOf("\"product\":{\"id\":") + 11;
                 imageUrlStart = imageUrlString.IndexOf("{\"src\":\"", imageUrlStart) + 8;
                 var imageUrlEnd = imageUrlString.IndexOf("orientation", imageUrlStart) - 3;
-                furniture.ImageUrl = null;
                 furniture.ImageUrl = imageUrlString.Substring(imageUrlStart, imageUrlEnd - imageUrlStart).Trim().Replace("\\u002F", "/");
 
                 httpclient = new HttpClient();
                 HttpResponseMessage response = await httpclient.GetAsync(furniture.ImageUrl);
                 Stream streamToReadFrom = await response.Content.ReadAsStreamAsync();
                 var br = new BinaryReader(streamToReadFrom);
-                furniture.Image = null;
                 furniture.Image = br.ReadBytes((int)streamToReadFrom.Length);
             }
             catch (Exception e)
             {
-                OnError?.Invoke(this, new EventArgs(e.Message));
+                OnError?.Invoke(this, new NotificationEventArgs(e.Message));
             }
         } 
     }

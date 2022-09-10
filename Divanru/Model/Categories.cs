@@ -18,39 +18,31 @@ namespace Divanru
     {
         private const string siteurl = "https://www.divan.ru/ekaterinburg/";
         private const string categoryUrl = "https://www.divan.ru/ekaterinburg/category/";
-        private const string regexstring = @"""name"":""[^{]*""url"":""\\u002Fekaterinburg\\u002Fcategory\\u002F[\w-]*";
-        private const string catstring = "ekaterinburg\\u002Fcategory\\";
+        private const string regexString = @"""name"":""[^{]*""url"":""\\u002Fekaterinburg\\u002Fcategory\\u002F[\w-]*";
+        private const string catString = "ekaterinburg\\u002Fcategory\\";
 
-        public event EventHandler<EventArgs> OnError;
+        public event EventHandler<NotificationEventArgs> OnError;
         public event EventHandler<CatParsingEventArgs> OnParsing;
         public event EventHandler<AllCategoriesParsingArgs> OnAllCategoriesParsing;
 
         private List<ListElement> _categories = new List<ListElement>();      //лист с категориями
 
-        public IEnumerator<ListElement> GetEnumerator()
-        {
-            return ((IEnumerable<ListElement>)_categories).GetEnumerator();
-        }
+        public IEnumerator<ListElement> GetEnumerator() => ((IEnumerable<ListElement>)_categories).GetEnumerator();
 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return ((IEnumerable)_categories).GetEnumerator();
-        }
+        IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)_categories).GetEnumerator();
+
         /// <summary>
         /// Индексатор.
         /// </summary>
         /// <param name="index"></param>
         /// <returns></returns>
-        public ListElement this [int index]
-        { 
-            get { return _categories [index]; }
-        }
+        public ListElement this [int index] { get { return _categories [index]; } }
 
         /// <summary>
         /// Возвращает коллекцию из названий категорий для отображения в листбоксе
         /// </summary>
         /// <returns></returns>
-        public ObservableCollection<string> GetList()
+        public ObservableCollection<string> GetTitleList()
         {
             ObservableCollection<string> list = new ObservableCollection<string>();
             _categories.ForEach(c => list.Add(c.Title));
@@ -67,7 +59,7 @@ namespace Divanru
         /// </summary>
         /// <param name="url"></param>
         /// <returns></returns>
-        public async Task FindCategories(string url = siteurl)
+        public async Task FindCategoriesAsync(string url = siteurl)
         {
             _categories.Clear();
             var httpclient = new HttpClient();
@@ -77,10 +69,10 @@ namespace Divanru
                 var html = await httpclient.GetStringAsync(url);
                 var htmlDocument = new HtmlAgilityPack.HtmlDocument();
                 htmlDocument.LoadHtml(html);
-                var regex = new Regex(regexstring);
+                var regex = new Regex(regexString);
 
                 var html1 = htmlDocument.DocumentNode.Descendants().Where(n => n.Name == "script")
-                    .Where(n => n.InnerHtml.Contains(catstring)).FirstOrDefault()?.InnerText;
+                    .Where(n => n.InnerHtml.Contains(catString)).FirstOrDefault()?.InnerText;
                 MatchCollection matches = regex.Matches(html1);
                 if (matches.Count > 0)
                 {
@@ -105,7 +97,7 @@ namespace Divanru
             }
             catch (Exception e)
             {
-                OnError?.Invoke(this, new EventArgs(e.Message));
+                OnError?.Invoke(this, new NotificationEventArgs(e.Message));
             }
         }
 
@@ -116,9 +108,9 @@ namespace Divanru
         /// </summary>
         /// <param name="url">URL-адрес категории.</param>
         /// <returns></returns> 
-        public async Task<List<ListElement>> ParseProductsOneCat(string url, CancellationToken cancellationToken)
+        public async Task<List<ListElement>> ParseProductsOneCatAsync(string url, CancellationToken cancellationToken)
         {
-            List<ListElement> productsList = new List<ListElement>();
+            var productsList = new List<ListElement>();
             try
             {
                 var httpclient = new HttpClient();
@@ -130,7 +122,7 @@ namespace Divanru
 
                 if (cancellationToken.IsCancellationRequested) 
                 { 
-                    OnError?.Invoke(this, new EventArgs("Parsing selected category has been canceled")); 
+                    OnError?.Invoke(this, new NotificationEventArgs("Parsing selected category has been canceled")); 
                     return productsList;
                 }
 
@@ -154,14 +146,14 @@ namespace Divanru
                     OnParsing?.Invoke(this, new CatParsingEventArgs(lastPage, i));
                     if (cancellationToken.IsCancellationRequested)
                     {
-                        OnError?.Invoke(this, new EventArgs("Parsing selected category has been canceled"));
+                        OnError?.Invoke(this, new NotificationEventArgs("Parsing selected category has been canceled"));
                         return productsList;
                     }
                 }               
             }
             catch (Exception e)
             {
-                OnError?.Invoke(this, new EventArgs(e.Message));
+                OnError?.Invoke(this, new NotificationEventArgs(e.Message));
             }
             return productsList;
 
@@ -176,12 +168,14 @@ namespace Divanru
         {
             var hrefs =
                 htmlDocument.DocumentNode.Descendants()
-                .Where(node => (node.GetAttributeValue("href", "").Contains("ekaterinburg/product") && !node.GetAttributeValue("class", "").Equals("ImmXq WSf92"))).ToList();
+                .Where(node => node.GetAttributeValue("href", "").Contains("ekaterinburg/product") && !node.GetAttributeValue("class", "").Equals("ImmXq WSf92")).ToList();
             foreach (var div in hrefs)
             {
-                var listElement = new ListElement();
-                listElement.Link = div.GetAttributeValue("href", "").Substring(22);
-                listElement.Title = div.InnerText;
+                var listElement = new ListElement
+                {
+                    Link = div.GetAttributeValue("href", "").Substring(22),
+                    Title = div.InnerText
+                };
                 if (!listElement.Title.Equals("Купить") && !listElement.Title.Equals("") && !products.Contains(listElement))
                     products.Add(listElement);
             }
@@ -201,13 +195,13 @@ namespace Divanru
             int ProgressBarMax = _categories.Count;
             foreach (var cat in _categories)
             {
-                products.AddRange(await ParseProductsOneCat(categoryUrl + cat.Link, cancellationToken));
+                products.AddRange(await ParseProductsOneCatAsync(categoryUrl + cat.Link, cancellationToken));
                 ProgressBarValue++;
                 OnAllCategoriesParsing?.Invoke(this, new AllCategoriesParsingArgs(ProgressBarMax, ProgressBarValue,products));
                 if (cancellationToken.IsCancellationRequested)
                 {
                     OrderProducts();
-                    OnError?.Invoke(this, new EventArgs("All categories parsing has been canceled"));
+                    OnError?.Invoke(this, new NotificationEventArgs("All categories parsing has been canceled"));
                     return;
                 }
             }

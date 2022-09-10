@@ -11,16 +11,16 @@ namespace Divanru
         int MaxVal { get; }
         int Val { get; }
     }
-    public class EventArgs
+    public class NotificationEventArgs : EventArgs
     {
-        public EventArgs(string Text)
+        public NotificationEventArgs(string Text)
         {
             this.Text = Text;
         }
         public string Text { get; }
     }
 
-    public class CatParsingEventArgs : IProgressBarEventArgs
+    public class CatParsingEventArgs : EventArgs, IProgressBarEventArgs
     {
         public CatParsingEventArgs(int MaxVal, int Val)
         {
@@ -31,7 +31,7 @@ namespace Divanru
         public int Val { get; }
     }
 
-    public class AllCategoriesParsingArgs : IProgressBarEventArgs
+    public class AllCategoriesParsingArgs : EventArgs, IProgressBarEventArgs
     {
         public AllCategoriesParsingArgs(int maxVal, int val, Products products)
         {
@@ -44,7 +44,7 @@ namespace Divanru
         public Products Products { get; }
     }
 
-    public class CopyCatToDBArgs : IProgressBarEventArgs
+    public class CopyCatToDBArgs : EventArgs, IProgressBarEventArgs
     {
         public CopyCatToDBArgs(int MaxVal, int Val, Furniture furniture)
         {
@@ -55,6 +55,5 @@ namespace Divanru
         public int MaxVal { get; }
         public int Val { get; }
         public Furniture Furniture { get; }
-
     }
 }

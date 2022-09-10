@@ -17,10 +17,9 @@ namespace Divanru
         /// </summary>
         private static readonly string dbConnectionString = ConfigurationManager.ConnectionStrings["DBconnectionString"].ConnectionString;
         private readonly MySqlConnection connection = new MySqlConnection(dbConnectionString);
-        /// <summary>
-        /// Событие ошибки.
-        /// </summary>
-        public event EventHandler<EventArgs> OnError;
+
+        public event EventHandler<NotificationEventArgs> OnEvent;
+
         /// <summary>
         /// Событие при копировании категории в БД.
         /// </summary>
@@ -41,7 +40,7 @@ namespace Divanru
                 }
                 catch (Exception ee)
                 {
-                    OnError?.Invoke(this, new EventArgs(ee.Message));
+                    OnEvent?.Invoke(this, new NotificationEventArgs(ee.Message));
                 }
             }
         }
@@ -84,12 +83,12 @@ namespace Divanru
             }
             catch (Exception ee)
             {
-                OnError?.Invoke(this, new EventArgs(ee.Message));
+                OnEvent?.Invoke(this, new NotificationEventArgs(ee.Message));
             }
 
             if (table.Rows.Count > 0)
             {        
-                OnError?.Invoke(this, new EventArgs($"{furniture.Model} aleady exists in the Database"));
+                OnEvent?.Invoke(this, new NotificationEventArgs($"{furniture.Model} aleady exists in the Database"));
                 return;
             }
 
@@ -128,11 +127,11 @@ namespace Divanru
             try
             {
                 if (command.ExecuteNonQuery() == 1)
-                    OnError?.Invoke(this, new EventArgs($"{furniture.Model} has been added to the Database"));
+                    OnEvent?.Invoke(this, new NotificationEventArgs($"{furniture.Model} has been added to the Database"));
             }
             catch (Exception e)
             {
-                OnError?.Invoke(this, new EventArgs($"Error adding {furniture.Model}, {e.Message}"));
+                OnEvent?.Invoke(this, new NotificationEventArgs($"Error adding {furniture.Model}, {e.Message}"));
             }
 
             db.CloseConnecton();
@@ -163,12 +162,12 @@ namespace Divanru
             }
             catch (Exception ee)
             {
-                OnError?.Invoke(this, new EventArgs(ee.Message));
+                OnEvent?.Invoke(this, new NotificationEventArgs(ee.Message));
             }
 
             if (table.Rows.Count == 0)
             {
-                OnError?.Invoke(this, new EventArgs($"{key} not found"));
+                OnEvent?.Invoke(this, new NotificationEventArgs($"{key} not found"));
                 return null;
             }
 
@@ -205,19 +204,21 @@ namespace Divanru
             }
             catch (Exception ee)
             {
-                OnError?.Invoke(this, new EventArgs(ee.Message));
+                OnEvent?.Invoke(this, new NotificationEventArgs(ee.Message));
             }
-            var furniture = new Furniture();
-            furniture.Categories = new string[3] { (string)table.Rows[0].ItemArray[0], (string)table.Rows[0].ItemArray[1], (string)table.Rows[0].ItemArray[2] };
-            furniture.Model = (string)table.Rows[0].ItemArray[3];
-            furniture.Description = (string)table.Rows[0].ItemArray[4];
-            furniture.Price = (string)table.Rows[0].ItemArray[5];
-            furniture.OldPrice = (string)table.Rows[0].ItemArray[6];
-            furniture.Link = (string)table.Rows[0].ItemArray[7];
-            furniture.Size = new string[3] { (string)table.Rows[0].ItemArray[8], (string)table.Rows[0].ItemArray[9], (string)table.Rows[0].ItemArray[10] };
-            furniture.Characteristics = new string[14] { (string)table.Rows[0].ItemArray[11], (string)table.Rows[0].ItemArray[12], (string)table.Rows[0].ItemArray[13], (string)table.Rows[0].ItemArray[14], (string)table.Rows[0].ItemArray[15], (string)table.Rows[0].ItemArray[16], (string)table.Rows[0].ItemArray[17], (string)table.Rows[0].ItemArray[18], (string)table.Rows[0].ItemArray[19], (string)table.Rows[0].ItemArray[20], (string)table.Rows[0].ItemArray[21], (string)table.Rows[0].ItemArray[22], (string)table.Rows[0].ItemArray[23], (string)table.Rows[0].ItemArray[24] };
-            furniture.ImageUrl = (string)table.Rows[0].ItemArray[25];
-            furniture.Image = (byte[])table.Rows[0].ItemArray[26];
+            var furniture = new Furniture
+            {
+                Categories = new string[3] { (string)table.Rows[0].ItemArray[0], (string)table.Rows[0].ItemArray[1], (string)table.Rows[0].ItemArray[2] },
+                Model = (string)table.Rows[0].ItemArray[3],
+                Description = (string)table.Rows[0].ItemArray[4],
+                Price = (string)table.Rows[0].ItemArray[5],
+                OldPrice = (string)table.Rows[0].ItemArray[6],
+                Link = (string)table.Rows[0].ItemArray[7],
+                Size = new string[3] { (string)table.Rows[0].ItemArray[8], (string)table.Rows[0].ItemArray[9], (string)table.Rows[0].ItemArray[10] },
+                Characteristics = new string[14] { (string)table.Rows[0].ItemArray[11], (string)table.Rows[0].ItemArray[12], (string)table.Rows[0].ItemArray[13], (string)table.Rows[0].ItemArray[14], (string)table.Rows[0].ItemArray[15], (string)table.Rows[0].ItemArray[16], (string)table.Rows[0].ItemArray[17], (string)table.Rows[0].ItemArray[18], (string)table.Rows[0].ItemArray[19], (string)table.Rows[0].ItemArray[20], (string)table.Rows[0].ItemArray[21], (string)table.Rows[0].ItemArray[22], (string)table.Rows[0].ItemArray[23], (string)table.Rows[0].ItemArray[24] },
+                ImageUrl = (string)table.Rows[0].ItemArray[25],
+                Image = (byte[])table.Rows[0].ItemArray[26]
+            };
             return furniture;
         }
 
@@ -237,12 +238,12 @@ namespace Divanru
             {
                 if (command.ExecuteNonQuery() == 1)
                 {
-                    OnError?.Invoke(this, new EventArgs($"{model} has been deleted from the Database"));
+                    OnEvent?.Invoke(this, new NotificationEventArgs($"{model} has been deleted from the Database"));
                 }
             }
             catch (Exception ee)
             {
-                OnError?.Invoke(this, new EventArgs(ee.Message));
+                OnEvent?.Invoke(this, new NotificationEventArgs(ee.Message));
             }
             db.CloseConnecton();
         }
@@ -253,7 +254,7 @@ namespace Divanru
         /// <param name="products"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task CopyCategoryToDb (Products products, CancellationToken cancellationToken)
+        public async Task CopyCategoryToDbAsync (Products products, CancellationToken cancellationToken)
         {
             Furniture furniture = new Furniture();
             for (int i = 0; i < products.Count; i++)    
@@ -263,7 +264,7 @@ namespace Divanru
                 OnCopyCategoryToDB?.Invoke(this, new CopyCatToDBArgs(products.Count, i + 1, furniture));
                 if (cancellationToken.IsCancellationRequested)
                 {
-                    OnError?.Invoke(this, new EventArgs("Copying category to the Database has been canceled"));
+                    OnEvent?.Invoke(this, new NotificationEventArgs("Copying category to the Database has been canceled"));
                     return;
                 }
             } 
