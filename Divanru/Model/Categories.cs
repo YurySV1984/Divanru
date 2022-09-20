@@ -118,7 +118,7 @@ namespace Divanru
                 var htmlDocument = new HtmlAgilityPack.HtmlDocument();
                 htmlDocument.LoadHtml(html);
 
-                CheckProduct(ref productsList, in htmlDocument);
+                CheckProduct(productsList, in htmlDocument);
 
                 if (cancellationToken.IsCancellationRequested) 
                 { 
@@ -142,7 +142,7 @@ namespace Divanru
                     html = await httpclient.GetStringAsync(url + "/page-" + i);
                     htmlDocument = new HtmlAgilityPack.HtmlDocument();
                     htmlDocument.LoadHtml(html);
-                    CheckProduct(ref productsList, in htmlDocument);
+                    CheckProduct(productsList, in htmlDocument);
                     OnParsing?.Invoke(this, new CatParsingEventArgs(lastPage, i));
                     if (cancellationToken.IsCancellationRequested)
                     {
@@ -164,7 +164,7 @@ namespace Divanru
         /// </summary>
         /// <param name="products"></param>
         /// <param name="htmlDocument"></param>
-        private void CheckProduct(ref List<ListElement> products, in HtmlAgilityPack.HtmlDocument htmlDocument)
+        private void CheckProduct(List<ListElement> products, in HtmlAgilityPack.HtmlDocument htmlDocument)
         {
             var hrefs =
                 htmlDocument.DocumentNode.Descendants()

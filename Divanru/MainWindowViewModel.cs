@@ -23,7 +23,7 @@ namespace Divanru
         private Categories _categories = new Categories();
         private Products _products = new Products();
         private SFurniture[] sFurnitureTable;
-        private DB db = new DB();
+        private readonly DB db = new DB();
 
         private const string productUrl = "https://www.divan.ru/ekaterinburg/product/";
         private const string categoryUrl = "https://www.divan.ru/ekaterinburg/category/";
